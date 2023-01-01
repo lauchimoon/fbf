@@ -1,5 +1,5 @@
 CC = g++
-SRC = main.cc
+SRC = $(wildcard *.cc)
 LDLIBS = -L../raylib/src/ -lraylib -lGL -lm -ldl -lpthread
 INCLUDE = -I../raylib/src/ -I../raygui/src/
 OUT = fbf
