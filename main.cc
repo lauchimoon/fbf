@@ -29,12 +29,26 @@ struct State {
 struct Button {
     Rectangle bounds;
     const char *text;
+
+    void draw() { GuiButton(bounds, text); }
+
+    bool pressed()
+    {
+        if (CheckCollisionPointRec(GetMousePosition(), bounds))
+            return IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+
+        return false;   
+    }
 };
 
 struct Textbox {
     Rectangle bounds;
     char *text;
     bool edit;
+
+    bool draw() { return GuiTextBox(bounds, text, TEXTSIZE, edit); }
+
+    bool draw(int *value) { return GuiValueBox(bounds, text, value, MIN_FPS_VALUE, MAX_FPS_VALUE, edit); }
 };
 
 State state_new()
@@ -47,32 +61,9 @@ inline Button button_new(Rectangle bounds, const char *text)
     return Button{ bounds, text };
 }
 
-inline void button_draw(Button b)
-{
-    GuiButton(b.bounds, b.text);
-}
-
-inline bool button_pressed(Button b)
-{
-    if (CheckCollisionPointRec(GetMousePosition(), b.bounds))
-        return IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
-
-    return false;
-}
-
 inline Textbox textbox_new(Rectangle bounds, char *text)
 {
     return Textbox{ bounds, text, false };
-}
-
-inline bool textbox_draw(Textbox t)
-{
-    return GuiTextBox(t.bounds, t.text, TEXTSIZE, t.edit);
-}
-
-inline bool textbox_draw(Textbox t, int *value)
-{
-    return GuiValueBox(t.bounds, t.text, value, MIN_FPS_VALUE, MAX_FPS_VALUE, t.edit);
 }
 
 int main()
@@ -130,16 +121,16 @@ int main()
             state.nframes = 1;
 
         // Change current frame number
-        if (button_pressed(buttons["<<"])) {
+        if (buttons["<<"].pressed()) {
             state.current_frame = 0;
-        } else if (button_pressed(buttons["<"])) {
+        } else if (buttons["<"].pressed()) {
             state.current_frame--;
-        } else if (button_pressed(buttons[">"])) {
+        } else if (buttons[">"].pressed()) {
             if (state.current_frame == state.nframes - 1)
                 state.nframes++;
 
             state.current_frame++;
-        } else if (button_pressed(buttons[">>"])) {
+        } else if (buttons[">>"].pressed()) {
             state.current_frame = state.nframes - 1;
         }
 
@@ -150,14 +141,14 @@ int main()
         ClearBackground(WHITE);
 
         // Title box
-        textbox_draw(box_title);
+        box_title.draw();
 
         if (std::string(box_title.text).empty()) // Placeholder text
             DrawTextEx(font, "Title", Vector2{box_title.bounds.x + 5.0f, box_title.bounds.y + 8.0f}, 32.0f, 2.0f, Fade(GRAY, 0.5f));
 
         // Buttons
         for (auto b : buttons)
-            button_draw(b.second);
+            b.second.draw();
 
         // Clip outline
         DrawRectangleLinesEx(clip_outline, 2, BLACK);
@@ -175,7 +166,7 @@ int main()
         DrawTextEx(font, frame_n_text, Vector2{float(GetScreenWidth()/2 - ntext_measures.x/2.0f), clip_outline.y + clip_outline.height + 10.0f}, 64.0f, 2.0f, BLACK);
 
         // Change FPS
-        textbox_draw(box_fps, &state.fps_value);
+        box_fps.draw(&state.fps_value);
         Vector2 fpstext_measures = MeasureTextEx(font, "FPS", 64.0f, 2.0f);
         DrawTextEx(font, "FPS", Vector2{(components_outline.x + components_outline.width)/2.0f - fpstext_measures.x/2.0f, box_fps.bounds.y - 70.0f}, 64.0f, 2.0f, BLACK);
 
