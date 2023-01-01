@@ -1,4 +1,4 @@
-![](assets/logo2.png)
+![](logo-promo.png)
 # fbf
 fbf stands for 'Frame By Frame'. It is intended to be a small and compact animation engine.
 
