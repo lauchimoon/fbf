@@ -1,7 +1,7 @@
 CC = g++
 SRC = main.cc
 LDLIBS = -L../raylib/src/ -lraylib -lGL -lm -ldl -lpthread
-INCLUDE = -I../raylib/src/ -I../../gits/raygui/src/
+INCLUDE = -I../raylib/src/ -I../raygui/src/
 OUT = fbf
 
 default:
