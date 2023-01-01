@@ -19,6 +19,13 @@ enum {
 };
 #define TITLE "fbf"
 
+struct State {
+    int current_frame;
+    int nframes;
+    int fps_value;
+    const char *animtitle;
+};
+
 struct Button {
     Rectangle bounds;
     const char *text;
@@ -30,6 +37,10 @@ struct Textbox {
     bool edit;
 };
 
+State state_new()
+{
+    return State{ 0, 1, 20, "" };
+}
 
 inline Button button_new(Rectangle bounds, const char *text)
 {
@@ -100,9 +111,7 @@ int main()
         {"del", button_new({25.0f, float(GetScreenHeight() - 95), 148.0f, 64.0f}, "Delete Frame")},
     };
 
-    int current_frame = 0;
-    int nframes = 1;
-    int fps_value = 60;
+    State state = state_new();
     Color brush_color = BLACK;
     Texture fbf_logo = LoadTexture("assets/logo.png");
 
@@ -111,26 +120,27 @@ int main()
     while (!WindowShouldClose()) {
         // Updating
         // --------
+        state.animtitle = box_title.text;
         box_title.edit = CheckCollisionPointRec(GetMousePosition(), box_title.bounds);
         box_fps.edit = CheckCollisionPointRec(GetMousePosition(), box_fps.bounds);
 
-        if (current_frame <= 0) // Clamp
-            current_frame = 0;
-        if (nframes <= 1)
-            nframes = 1;
+        if (state.current_frame <= 0) // Clamp
+            state.current_frame = 0;
+        if (state.nframes <= 1)
+            state.nframes = 1;
 
         // Change current frame number
         if (button_pressed(buttons["<<"])) {
-            current_frame = 0;
+            state.current_frame = 0;
         } else if (button_pressed(buttons["<"])) {
-            current_frame--;
+            state.current_frame--;
         } else if (button_pressed(buttons[">"])) {
-            if (current_frame == nframes - 1)
-                nframes++;
+            if (state.current_frame == state.nframes - 1)
+                state.nframes++;
 
-            current_frame++;
+            state.current_frame++;
         } else if (button_pressed(buttons[">>"])) {
-            current_frame = nframes - 1;
+            state.current_frame = state.nframes - 1;
         }
 
         // Drawing
@@ -160,12 +170,12 @@ int main()
         DrawRectangleLinesEx(color_outline, 2, BLACK);
 
         // Frame number
-        const char *frame_n_text = TextFormat("Frame %d", current_frame + 1);
+        const char *frame_n_text = TextFormat("Frame %d", state.current_frame + 1);
         Vector2 ntext_measures = MeasureTextEx(font, frame_n_text, 64.0f, 2.0f);
         DrawTextEx(font, frame_n_text, Vector2{float(GetScreenWidth()/2 - ntext_measures.x/2.0f), clip_outline.y + clip_outline.height + 10.0f}, 64.0f, 2.0f, BLACK);
 
         // Change FPS
-        textbox_draw(box_fps, &fps_value);
+        textbox_draw(box_fps, &state.fps_value);
         Vector2 fpstext_measures = MeasureTextEx(font, "FPS", 64.0f, 2.0f);
         DrawTextEx(font, "FPS", Vector2{(components_outline.x + components_outline.width)/2.0f - fpstext_measures.x/2.0f, box_fps.bounds.y - 70.0f}, 64.0f, 2.0f, BLACK);
 
