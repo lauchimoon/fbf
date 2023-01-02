@@ -135,6 +135,9 @@ void UI::update(State *state)
     state->anim_fps = std::atoi(box_fps.text);
     state->nframes = state->frames.size();
 
+    state->frames[state->current_frame].id = state->current_frame;
+    state->frames[state->current_frame].duration = std::atoi(box_frame_dur.text);
+
     // Change current frame number
     if (buttons["<<"].pressed()) {
         state->current_frame = 0;
@@ -184,14 +187,14 @@ void UI::update(State *state)
 
     // Save project
     if (buttons["save"].pressed()) {
-        if (!(state->anim_title).empty() && state->anim_fps > 0) {
+        if (!(state->anim_title).empty() && state->anim_fps > 0 && state->frames[state->current_frame].duration > 0) {
             state->saved = true;
             state->write();
             show_msg = msg_tmp;
             msg = "Saved project";
         } else {
             show_msg = msg_tmp;
-            msg = "Make sure to set a title and the FPS";
+            msg = "Make sure to set all fields with a value";
         }
     }
 }
