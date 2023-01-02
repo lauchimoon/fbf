@@ -1,10 +1,12 @@
 #pragma once
 
+#include <string>
+
 struct State {
     int current_frame;
     int nframes;
     int fps_value;
-    const char *animtitle;
+    std::string animtitle;
 };
 
 State state_new();
