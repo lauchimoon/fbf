@@ -1,6 +1,7 @@
 #include "config.h"
 #include "ui.h"
 #include "raygui.h"
+#include <iostream>
 
 UI ui_new(void)
 {
@@ -9,10 +10,8 @@ UI ui_new(void)
     Rectangle components_outline = { float(clip_outline.x - (COMPONENTS_BOXSIZE_W + 10)), float(clip_outline.y), COMPONENTS_BOXSIZE_W, COMPONENTS_BOXSIZE_H - 140.0f };
     Rectangle color_outline = { float(clip_outline.x + clip_outline.width + 10), float(clip_outline.y), COMPONENTS_BOXSIZE_W - 30.0f, COMPONENTS_BOXSIZE_H };
 
-    char box_title_text[TEXTSIZE] = { 0 };
-    char box_fps_text[TEXTSIZE] = { 0 };
-    Textbox box_title = textbox_new({10.0f, 10.0f, 465.0f, 48.0f}, box_title_text);
-    Textbox box_fps = textbox_new({components_outline.x + 5.0f, components_outline.y + 387.0f, components_outline.width - 10.0f, 48.0f}, box_fps_text);
+    Textbox box_title = textbox_new({10.0f, 10.0f, 465.0f, 48.0f});
+    Textbox box_fps = textbox_new({components_outline.x + 5.0f, components_outline.y + 387.0f, components_outline.width - 10.0f, 48.0f});
 
     std::map<std::string, Button> buttons = {
         {"new", button_new({10.0f, 70.0f, 148.0f, 48.0f}, "New Project")},
@@ -45,7 +44,7 @@ UI ui_new(void)
 void UI::draw(State state)
 {
     // Title box
-    box_title.draw();
+    box_title.draw(false);
 
     if (std::string(box_title.text).empty()) // Placeholder text
         DrawTextEx(font, "Title", Vector2{box_title.bounds.x + 5.0f, box_title.bounds.y + 8.0f}, 32.0f, 2.0f, Fade(GRAY, 0.5f));
@@ -70,7 +69,7 @@ void UI::draw(State state)
     DrawTextEx(font, frame_n_text, Vector2{float(GetScreenWidth()/2 - ntext_measures.x/2.0f), outline_clip.y + outline_clip.height + 10.0f}, 64.0f, 2.0f, BLACK);
 
     // Change FPS
-    box_fps.draw(&state.fps_value);
+    box_fps.draw(true);
     Vector2 fpstext_measures = MeasureTextEx(font, "FPS", 64.0f, 2.0f);
     DrawTextEx(font, "FPS", Vector2{(outline_components.x + outline_components.width)/2.0f - fpstext_measures.x/2.0f, box_fps.bounds.y - 70.0f}, 64.0f, 2.0f, BLACK);
 }
@@ -93,4 +92,10 @@ void UI::update(State *state)
     } else if (buttons[">>"].pressed()) {
         state->current_frame = state->nframes - 1;
     }
+}
+
+void UI::end(void)
+{
+    box_title.end();
+    box_fps.end();
 }

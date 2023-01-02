@@ -18,6 +18,7 @@ struct UI {
 
     void draw(State state);
     void update(State *state);
+    void end(void);
 };
 
 UI ui_new(void);

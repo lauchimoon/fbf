@@ -7,8 +7,8 @@ struct Textbox {
     char *text;
     bool edit;
 
-    bool draw();
-    bool draw(int *value);
+    bool draw(bool numerical);
+    void end(void);
 };
 
-Textbox textbox_new(Rectangle bounds, char *text);
+Textbox textbox_new(Rectangle bounds);

@@ -4,8 +4,6 @@
 #include "config.h"
 #include "raylib.h"
 #include "ui.h"
-
-#define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
 int main()
@@ -53,6 +51,8 @@ int main()
 
     UnloadFont(font);
     UnloadTexture(fbf_logo);
+    ui.end();
+
     CloseWindow();
     return 0;
 }
