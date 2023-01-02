@@ -28,8 +28,6 @@ int main()
         // --------
         ui.update(&state);
 
-        state.animtitle = ui.box_title.text;
-
         if (state.current_frame <= 0) // Clamp
             state.current_frame = 0;
         if (state.nframes <= 1)

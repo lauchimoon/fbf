@@ -12,6 +12,7 @@ struct UI {
     Rectangle outline_color;
     Textbox box_title;
     Textbox box_fps;
+    Textbox box_frame_dur;
     std::map<std::string, Button> buttons;
     Font font;
     Color brush_color;
@@ -19,6 +20,7 @@ struct UI {
     void draw(State state);
     void update(State *state);
     void end(void);
+    void display_message(std::string msg);
 };
 
 UI ui_new(void);

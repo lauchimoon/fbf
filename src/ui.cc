@@ -1,7 +1,17 @@
 #include "config.h"
 #include "ui.h"
 #include "raygui.h"
-#include <iostream>
+#include <string.h>
+
+int show_msg = 0;
+int msg_time = MESSAGE_DURATION;
+std::string msg = "";
+
+enum {
+    msg_tmp = 1,
+    msg_forever,
+    msg_decision
+};
 
 UI ui_new(void)
 {
@@ -32,12 +42,26 @@ UI ui_new(void)
         {"del", button_new({25.0f, float(GetScreenHeight() - 95), 148.0f, 64.0f}, "Delete Frame")},
     };
 
+    Textbox box_frame_dur = textbox_new({buttons[">>"].bounds.x + 70.0f, buttons[">>"].bounds.y + 8.0f, components_outline.width + 28.0f, 48.0f});
+
     ui.outline_clip = clip_outline;
     ui.outline_components = components_outline;
     ui.outline_color = color_outline;
     ui.box_title = box_title;
     ui.box_fps = box_fps;
+    ui.box_frame_dur = box_frame_dur;
     ui.buttons = buttons;
+
+    ui.box_fps.text[0] = '2';
+    ui.box_fps.text[1] = '0';
+
+    ui.box_frame_dur.text[0] = '1';
+    ui.box_frame_dur.text[1] = '0';
+
+    show_msg = 0;
+    msg_time = MESSAGE_DURATION;
+    msg = "";
+
     return ui;
 }
 
@@ -72,25 +96,103 @@ void UI::draw(State state)
     box_fps.draw(true);
     Vector2 fpstext_measures = MeasureTextEx(font, "FPS", 64.0f, 2.0f);
     DrawTextEx(font, "FPS", Vector2{(outline_components.x + outline_components.width)/2.0f - fpstext_measures.x/2.0f, box_fps.bounds.y - 70.0f}, 64.0f, 2.0f, BLACK);
+
+    // Warn that project is not saved
+    if (!state.saved) {
+        DrawTextEx(font, "*", Vector2{buttons["save"].bounds.x + buttons["save"].bounds.width + 10.0f, buttons["save"].bounds.y}, 64.0f, 2.0f, DARKGRAY);
+    }
+
+    // Display messages
+    if (show_msg == msg_tmp) {
+        msg_time--;
+        display_message(msg);
+
+        if (msg_time <= 0) {
+            msg_time = MESSAGE_DURATION;
+            show_msg = 0;
+        }
+    } else if ((show_msg == msg_forever) || (show_msg == msg_decision)) {
+        msg_time = 1;
+        display_message(msg);
+    } else {
+        show_msg = 0;
+        msg_time = MESSAGE_DURATION;
+    }
+
+    // Change frame duration
+    box_frame_dur.draw(true);
+    if (std::string(box_frame_dur.text).empty()) // Placeholder text
+        DrawTextEx(font, "Frame duration", Vector2{box_frame_dur.bounds.x + 5.0f, box_frame_dur.bounds.y + 8.0f}, 32.0f, 2.0f, Fade(GRAY, 0.5f));
 }
 
 void UI::update(State *state)
 {
     box_title.edit = CheckCollisionPointRec(GetMousePosition(), box_title.bounds);
     box_fps.edit = CheckCollisionPointRec(GetMousePosition(), box_fps.bounds);
+    box_frame_dur.edit = CheckCollisionPointRec(GetMousePosition(), box_frame_dur.bounds);
+
+    state->anim_title = box_title.text;
+    state->anim_fps = std::atoi(box_fps.text);
+    state->nframes = state->frames.size();
 
     // Change current frame number
     if (buttons["<<"].pressed()) {
         state->current_frame = 0;
+        state->saved = false;
     } else if (buttons["<"].pressed()) {
         state->current_frame--;
+        state->saved = false;
     } else if (buttons[">"].pressed()) {
-        if (state->current_frame == state->nframes - 1)
-            state->nframes++;
+        if (state->current_frame == state->nframes - 1) {
+            state->frames.push_back(DEFAULT_FRAME_NEW(state->current_frame + 1));
+        }
 
         state->current_frame++;
+        state->saved = false;
     } else if (buttons[">>"].pressed()) {
         state->current_frame = state->nframes - 1;
+        state->saved = false;
+    }
+
+    // New project
+    if (buttons["new"].pressed()) {
+        if (state->saved) {
+            (*state) = state_new();
+        } else {
+            show_msg = msg_decision;
+            msg = "Are you sure? Press Y/N";
+        }
+    }
+
+    if (show_msg == msg_decision) {
+        if (IsKeyPressed(KEY_Y)) { // Reset
+            (*state) = state_new();
+            show_msg = 0;
+            msg = "";
+            memset(box_title.text, 0, TEXTSIZE);
+            box_fps.text[0] = '2';
+            box_fps.text[1] = '0';
+        } else if (IsKeyPressed(KEY_N)) { // Just continue
+            show_msg = 0;
+            msg = "";
+        }
+    }
+
+    // Load project
+    if (buttons["open"].pressed()) {
+    }
+
+    // Save project
+    if (buttons["save"].pressed()) {
+        if (!(state->anim_title).empty() && state->anim_fps > 0) {
+            state->saved = true;
+            state->write();
+            show_msg = msg_tmp;
+            msg = "Saved project";
+        } else {
+            show_msg = msg_tmp;
+            msg = "Make sure to set a title and the FPS";
+        }
     }
 }
 
@@ -98,4 +200,12 @@ void UI::end(void)
 {
     box_title.end();
     box_fps.end();
+    box_frame_dur.end();
+}
+
+void UI::display_message(std::string msg)
+{
+    if (msg_time >= 0) {
+        DrawTextEx(font, msg.c_str(), Vector2{buttons["save"].bounds.x + buttons["save"].bounds.width + 60.0f, buttons["save"].bounds.y + 15.0f}, 32.0f, 1.0f, BLACK);
+    }
 }
