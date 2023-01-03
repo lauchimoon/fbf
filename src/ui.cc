@@ -164,6 +164,10 @@ void UI::update(State *state)
         state->saved = false;
     }
 
+    printf("%s\n", box_title.text);
+    printf("%s\n", box_fps.text);
+    printf("%s\n", box_frame_dur.text);
+
     // New project
     if (buttons["new"].pressed()) {
         if (state->saved) {
@@ -208,7 +212,7 @@ void UI::update(State *state)
 
     // Save project
     if (buttons["save"].pressed()) {
-        if (!(state->anim_title).empty() && state->anim_fps > 0 && state->frames[state->current_frame].duration > 0) {
+        if (!std::string(box_title.text).empty() && state->anim_fps > 0 && state->frames[state->current_frame].duration > 0) {
             state->saved = true;
             state->anim_title = box_title.text;
             state->anim_fps = std::atoi(box_fps.text);
