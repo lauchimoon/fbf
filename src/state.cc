@@ -6,8 +6,6 @@
 #include <filesystem>
 #include <ctype.h>
 
-std::string read_file_to_str(const char *filename);
-std::vector<std::string> split_str(std::string s, char find);
 int find_char_begin(std::string s, char c);
 int find_char_end(std::string s, char c);
 std::string replace_all(std::string s, char c1, char c2);
@@ -86,40 +84,6 @@ void State::write(void)
 
 // File-specific functions
 // -----------------------
-
-std::string read_file_to_str(const char *filename)
-{
-    char line[1024] = { 0 };
-    FILE *f = fopen(filename, "r");
-    if (f == NULL) {
-        printf("error\n");
-        return "";
-    }
-    std::string read = "";
-
-    while (fgets(line, 1024, f)) {
-        line[strcspn(line, "\n")] = 0;
-        read += line;
-        read += "\n";
-    }
-
-    read.pop_back();
-    fclose(f);
-    return read;
-}
-
-std::vector<std::string> split_str(std::string s, char find)
-{
-    std::vector<std::string> split = {};
-    std::stringstream ss(s);
-    std::string token;
-
-    while (std::getline(ss, token, find)) {
-        split.push_back(token);
-    }
-
-    return split;
-}
 
 int find_char_begin(std::string s, char c)
 {

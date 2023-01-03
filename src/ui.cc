@@ -1,17 +1,26 @@
 #include "config.h"
 #include "ui.h"
 #include "raygui.h"
+#include "tinyfiledialogs.h"
 #include <string.h>
+#include <math.h>
+#include <sstream>
 
 int show_msg = 0;
 int msg_time = MESSAGE_DURATION;
 std::string msg = "";
+char stateload_filename[TEXTSIZE] = { 0 };
 
 enum {
     msg_tmp = 1,
     msg_forever,
     msg_decision
 };
+
+int ndigits(int n);
+int file_dialog(const char *title, char *filename, const char *filters, const char *message);
+std::string read_file_to_str(const char *filename);
+std::vector<std::string> split_str(std::string s, char find);
 
 UI ui_new(void)
 {
@@ -131,8 +140,6 @@ void UI::update(State *state)
     box_fps.edit = CheckCollisionPointRec(GetMousePosition(), box_fps.bounds);
     box_frame_dur.edit = CheckCollisionPointRec(GetMousePosition(), box_frame_dur.bounds);
 
-    state->anim_title = box_title.text;
-    state->anim_fps = std::atoi(box_fps.text);
     state->nframes = state->frames.size();
 
     state->frames[state->current_frame].id = state->current_frame;
@@ -161,6 +168,7 @@ void UI::update(State *state)
     if (buttons["new"].pressed()) {
         if (state->saved) {
             (*state) = state_new();
+            reset();
         } else {
             show_msg = msg_decision;
             msg = "Are you sure? Press Y/N";
@@ -170,11 +178,7 @@ void UI::update(State *state)
     if (show_msg == msg_decision) {
         if (IsKeyPressed(KEY_Y)) { // Reset
             (*state) = state_new();
-            show_msg = 0;
-            msg = "";
-            memset(box_title.text, 0, TEXTSIZE);
-            box_fps.text[0] = '2';
-            box_fps.text[1] = '0';
+            reset();
         } else if (IsKeyPressed(KEY_N)) { // Just continue
             show_msg = 0;
             msg = "";
@@ -183,12 +187,31 @@ void UI::update(State *state)
 
     // Load project
     if (buttons["open"].pressed()) {
+        int result = file_dialog("Open fbf project", stateload_filename, "*.fbfp", "fbf project (*.fbfp)");
+        if (result == 0) {
+            std::string fileread = read_file_to_str(stateload_filename);
+            std::vector<std::string> info = split_str(fileread, '\n');
+            state->read(info);
+
+            for (int i = 0; i < state->anim_title.length(); i++) {
+                box_title.text[i] = state->anim_title[i];
+            }
+
+            for (int i = 0; i < ndigits(state->anim_fps); i++) {
+                box_fps.text[i] = std::to_string(state->anim_fps)[i];
+            }
+        } else {
+            show_msg = msg_tmp;
+            msg = "Nothing was loaded";
+        }
     }
 
     // Save project
     if (buttons["save"].pressed()) {
         if (!(state->anim_title).empty() && state->anim_fps > 0 && state->frames[state->current_frame].duration > 0) {
             state->saved = true;
+            state->anim_title = box_title.text;
+            state->anim_fps = std::atoi(box_fps.text);
             state->write();
             show_msg = msg_tmp;
             msg = "Saved project";
@@ -212,3 +235,78 @@ void UI::display_message(std::string msg)
         DrawTextEx(font, msg.c_str(), Vector2{buttons["save"].bounds.x + buttons["save"].bounds.width + 60.0f, buttons["save"].bounds.y + 15.0f}, 32.0f, 1.0f, BLACK);
     }
 }
+
+void UI::reset(void)
+{
+    box_title.end();
+    box_fps.end();
+    box_frame_dur.end();
+    box_title = textbox_new({10.0f, 10.0f, 465.0f, 48.0f});
+    box_fps = textbox_new({outline_components.x + 5.0f, outline_components.y + 387.0f, outline_components.width - 10.0f, 48.0f});
+    box_frame_dur = textbox_new({buttons[">>"].bounds.x + 70.0f, buttons[">>"].bounds.y + 8.0f, outline_components.width + 28.0f, 48.0f});
+
+    box_fps.text[0] = '2';
+    box_fps.text[1] = '0';
+
+    box_frame_dur.text[0] = '1';
+    box_frame_dur.text[1] = '0';
+
+    show_msg = 0;
+    msg_time = MESSAGE_DURATION;
+    msg = "";
+}
+
+int ndigits(int n)
+{
+    return int(log10(n) + 1);
+}
+
+int file_dialog(const char *title, char *filename, const char *filters, const char *message)
+{
+    int result = -1;
+    int filter_count = 0;
+    const char **filter_split = TextSplit(filters, ';', &filter_count);
+    const char *tmp_filename = tinyfd_openFileDialog(title, filename, filter_count, filter_split, message, 0);
+
+    if (tmp_filename != NULL)
+        strcpy(filename, tmp_filename);
+    else
+        return 1;
+
+    return 0;
+}
+
+std::string read_file_to_str(const char *filename)
+{
+    char line[1024] = { 0 };
+    FILE *f = fopen(filename, "r");
+    if (f == NULL) {
+        printf("error\n");
+        return "";
+    }
+    std::string read = "";
+
+    while (fgets(line, 1024, f)) {
+        line[strcspn(line, "\n")] = 0;
+        read += line;
+        read += "\n";
+    }
+
+    read.pop_back();
+    fclose(f);
+    return read;
+}
+
+std::vector<std::string> split_str(std::string s, char find)
+{
+    std::vector<std::string> split = {};
+    std::stringstream ss(s);
+    std::string token;
+
+    while (std::getline(ss, token, find)) {
+        split.push_back(token);
+    }
+
+    return split;
+}
+

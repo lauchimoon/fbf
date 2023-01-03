@@ -21,6 +21,7 @@ struct UI {
     void update(State *state);
     void end(void);
     void display_message(std::string msg);
+    void reset(void);
 };
 
 UI ui_new(void);
