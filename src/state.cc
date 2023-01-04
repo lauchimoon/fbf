@@ -20,7 +20,7 @@ State state_new()
     bool saved = true;
     int component = -1;
 
-    frames.push_back(frame_new(0, "(none)"));
+    frames.push_back(frame_new(0, "none"));
     return State{ current_frame, nframes, fps, title, frames, saved, component };
 }
 
@@ -56,7 +56,6 @@ int State::read(std::vector<std::string> info)
 void State::write(void)
 {
     // Make directories for project
-    std::string project_dirname = replace_all(lowercase(anim_title), ' ', '_') + "/";
     std::filesystem::create_directories(project_dirname + "frames/");
 
     // Create necessary files:

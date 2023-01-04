@@ -12,6 +12,7 @@ struct State {
     std::vector<Frame> frames;
     bool saved;
     int component_selected;
+    std::string project_dirname;
 
     int read(std::vector<std::string> info);
     void write(void);

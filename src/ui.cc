@@ -26,6 +26,8 @@ int ndigits(int n);
 int file_dialog(const char *title, char *filename, const char *filters, const char *message);
 std::string read_file_to_str(const char *filename);
 std::vector<std::string> split_str(std::string s, char find);
+std::string replace_all(std::string s, char c1, char c2);
+std::string lowercase(std::string s);
 
 UI ui_new(void)
 {
@@ -194,7 +196,7 @@ void UI::draw(State state)
     // Draw/erase frame
     BeginTextureMode(state.frames[state.current_frame].draw_texture);
 
-    if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+    if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(GetMousePosition(), outline_clip)) {
         if (state.component_selected == COMP_TYPE_DRAW) {
             DrawCircleV(virtual_mouse, brush_thickness, brush_color);
         }
@@ -240,7 +242,8 @@ void UI::update(State *state)
         state->saved = false;
     } else if (buttons[">"].pressed()) {
         if (state->current_frame == state->nframes - 1) {
-            state->frames.push_back(DEFAULT_FRAME_NEW(state->current_frame + 1));
+            Frame frame = frame_new(state->current_frame + 1, "none");
+            state->frames.push_back(frame);
         }
 
         state->current_frame++;
@@ -298,6 +301,19 @@ void UI::update(State *state)
             state->saved = true;
             state->anim_title = box_title.text;
             state->anim_fps = std::atoi(box_fps.text);
+            state->project_dirname = replace_all(lowercase(state->anim_title), ' ', '_') + "/";
+
+            for (int i = 0; i < state->nframes; i++) {
+                // Set names for each frame image path
+                state->frames[i].img_path = std::string(GetWorkingDirectory()) + "/" + state->project_dirname + "frames/" + std::to_string(i) + ".png";
+
+                // Write render texture data to image path files
+                Image dummy = LoadImageFromTexture(state->frames[i].draw_texture.texture);
+                ImageFlipVertical(&dummy);
+                ExportImage(dummy, state->frames[i].img_path.c_str());
+                UnloadImage(dummy);
+            }
+
             state->write();
             show_msg = msg_tmp;
             msg = "Saved project";

@@ -13,5 +13,4 @@ enum {
     MESSAGE_DURATION = 120
 };
 #define TITLE "fbf"
-#define DEFAULT_FRAME_NEW(id) frame_new(id, "(none)")
 
