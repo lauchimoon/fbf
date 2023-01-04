@@ -11,9 +11,11 @@ struct State {
     std::string anim_title;
     std::vector<Frame> frames;
     bool saved;
+    int component_selected;
 
     int read(std::vector<std::string> info);
     void write(void);
+    void end(void);
 };
 
 State state_new();

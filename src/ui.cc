@@ -3,13 +3,18 @@
 #include "raygui.h"
 #include "tinyfiledialogs.h"
 #include <string.h>
-#include <math.h>
+#include "raymath.h"
 #include <sstream>
+#include "components.h"
+
+#define MIN(a, b) ((a) < (b)? (a) : (b))
 
 int show_msg = 0;
 int msg_time = MESSAGE_DURATION;
 std::string msg = "";
 char stateload_filename[TEXTSIZE] = { 0 };
+Vector2 virtual_mouse = { 0, 0 };
+float brush_thickness = 5.0f;
 
 enum {
     msg_tmp = 1,
@@ -63,7 +68,7 @@ UI ui_new(void)
     ui.box_fps = box_fps;
     ui.buttons = buttons;
 
-    ui.brush_color = BLACK;
+    ui.brush_color = Color{1, 1, 1, 255};
     ui.alpha_value = 1.0f;
 
     ui.box_fps.text[0] = '2';
@@ -85,6 +90,20 @@ void UI::draw(State state)
         DrawTextEx(font, "Title", Vector2{box_title.bounds.x + 5.0f, box_title.bounds.y + 8.0f}, 32.0f, 2.0f, Fade(GRAY, 0.5f));
 
     // Buttons
+
+    // Draw shade if component is selected
+    std::string comp_key = "";
+    switch (state.component_selected) {
+        case COMP_TYPE_IMG: comp_key = "imag"; break;
+        case COMP_TYPE_DRAW: comp_key = "draw"; break;
+        case COMP_TYPE_ERASE: comp_key = "erase"; break;
+        case COMP_TYPE_TEXT: comp_key = "text"; break;
+    }
+
+    if (comp_key != "") {
+        DrawRectangle(buttons[comp_key].bounds.x - 5, buttons[comp_key].bounds.y - 4, outline_components.width, buttons[comp_key].bounds.height + 8, Fade(BLACK, 0.5f));
+    }
+
     for (auto b : buttons) {
         if (b.first != "prev") { // Preview button has custom colors
             b.second.draw();
@@ -127,9 +146,6 @@ void UI::draw(State state)
     GuiSetStyle(BUTTON, BASE_COLOR_PRESSED, base_color_pressed_prev);
     GuiSetStyle(BUTTON, TEXT_COLOR_PRESSED, text_color_pressed_prev);
 
-    // Clip outline
-    DrawRectangleLinesEx(outline_clip, 2, BLACK);
-
     // Components outline
     DrawRectangleLinesEx(outline_components, 2, BLACK);
 
@@ -137,6 +153,7 @@ void UI::draw(State state)
     brush_color = GuiColorPicker(outline_color, NULL, brush_color);
     DrawRectangleLinesEx(outline_color, 2, BLACK);
     alpha_value = GuiColorBarAlpha(outline_alpha, NULL, alpha_value);
+    brush_color.a = ColorFromNormalized(Vector4{0.0f, 0.0f, 0.0f, alpha_value}).a;
 
     // Frame number
     const char *frame_n_text = TextFormat("Frame %d", state.current_frame + 1);
@@ -169,6 +186,33 @@ void UI::draw(State state)
         show_msg = 0;
         msg_time = MESSAGE_DURATION;
     }
+
+    // Components
+
+    // Paste image on frame
+
+    // Draw/erase frame
+    BeginTextureMode(state.frames[state.current_frame].draw_texture);
+
+    if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+        if (state.component_selected == COMP_TYPE_DRAW) {
+            DrawCircleV(virtual_mouse, brush_thickness, brush_color);
+        }
+    }
+    EndTextureMode();
+
+    // Write text on frame
+
+    // Draw frame
+    RenderTexture rt_draw = state.frames[state.current_frame].draw_texture;
+    DrawTextureRec(rt_draw.texture, Rectangle{ 0.0f, 0.0f, float(rt_draw.texture.width), -float(rt_draw.texture.height) }, Vector2{ outline_clip.x, outline_clip.y }, WHITE);
+
+    // Clip outline
+    DrawRectangleLinesEx(outline_clip, 2, BLACK);
+
+    if (CheckCollisionPointRec(GetMousePosition(), outline_clip) && state.component_selected == COMP_TYPE_DRAW) {
+        DrawCircleV(GetMousePosition(), brush_thickness, brush_color);
+    }
 }
 
 void UI::update(State *state)
@@ -179,6 +223,13 @@ void UI::update(State *state)
     state->nframes = state->frames.size();
 
     state->frames[state->current_frame].id = state->current_frame;
+
+    // Compute virtual mouse position for drawing to render texture
+    float scale = MIN(float(GetScreenWidth()/CLIP_SIZE_W), float(GetScreenHeight()/CLIP_SIZE_H));
+    Vector2 mouse = GetMousePosition();
+    virtual_mouse.x = (mouse.x - (GetScreenWidth() - (CLIP_SIZE_W*scale))*0.5f)/scale;
+    virtual_mouse.y = (mouse.y - (GetScreenHeight() - (CLIP_SIZE_H*scale))*0.5f)/scale;
+    virtual_mouse = Vector2Clamp(virtual_mouse, Vector2{ 0.0f, 0.0f }, Vector2{ outline_clip.x + outline_clip.width, outline_clip.y + outline_clip.height });
 
     // Change current frame number
     if (buttons["<<"].pressed()) {
@@ -254,6 +305,47 @@ void UI::update(State *state)
             show_msg = msg_tmp;
             msg = "Make sure to set all fields with a value";
         }
+    }
+
+    // Select components
+
+    // Image
+    if (buttons["imag"].pressed()) {
+        state->component_selected = COMP_TYPE_IMG;
+    }
+
+    // Draw
+    if (buttons["draw"].pressed()) {
+        state->component_selected = COMP_TYPE_DRAW;
+    }
+
+    // Erase
+    if (buttons["erase"].pressed()) {
+        state->component_selected = COMP_TYPE_ERASE;
+    
+    }
+
+    // Text
+    if (buttons["text"].pressed()) {
+        state->component_selected = COMP_TYPE_TEXT;
+    }
+
+    // Clear frame
+    if (IsKeyPressed(KEY_DELETE)) {
+        state->frames[state->current_frame].end();
+        state->frames[state->current_frame].draw_texture = LoadRenderTexture(CLIP_SIZE_W, CLIP_SIZE_H);
+    }
+
+    // Clamp brush thickness
+    if (brush_thickness >= 5.0f && brush_thickness <= 50.0f) {
+        brush_thickness += GetMouseWheelMove();
+    }
+
+    if (brush_thickness < 5.0f) {
+        brush_thickness = 5.0f;
+    }
+    if (brush_thickness > 50.0f) {
+        brush_thickness = 50.0f;
     }
 }
 

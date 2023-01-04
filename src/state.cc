@@ -18,9 +18,10 @@ State state_new()
     std::string title = "";
     std::vector<Frame> frames = {};
     bool saved = true;
+    int component = -1;
 
     frames.push_back(frame_new(0, "(none)"));
-    return State{ current_frame, nframes, fps, title, frames, saved };
+    return State{ current_frame, nframes, fps, title, frames, saved, component };
 }
 
 int State::read(std::vector<std::string> info)
@@ -74,6 +75,13 @@ void State::write(void)
     }
 
     fclose(f);
+}
+
+void State::end(void)
+{
+    for (int i = 0; i < nframes; i++) {
+        frames[i].end();
+    }
 }
 
 // File-specific functions

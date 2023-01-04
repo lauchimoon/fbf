@@ -49,6 +49,7 @@ int main()
     UnloadFont(font);
     UnloadTexture(fbf_logo);
     ui.end();
+    state.end();
 
     CloseWindow();
     return 0;
