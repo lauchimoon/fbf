@@ -8,6 +8,7 @@ struct Frame {
     std::string img_path;
     //RenderTexture img_texture;
     RenderTexture draw_texture;
+    Texture visible_texture;
 
     void end(void);
 };

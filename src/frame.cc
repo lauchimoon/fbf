@@ -5,7 +5,7 @@ Frame frame_new(int id, std::string img_path)
 {
     RenderTexture draw_rt = LoadRenderTexture(CLIP_SIZE_W, CLIP_SIZE_H);
     BeginTextureMode(draw_rt);
-    ClearBackground(WHITE);
+    ClearBackground(BLANK);
     EndTextureMode();
     return Frame{ id, img_path, draw_rt };
 }
@@ -13,4 +13,5 @@ Frame frame_new(int id, std::string img_path)
 void Frame::end(void)
 {
     UnloadRenderTexture(draw_texture);
+    UnloadTexture(visible_texture);
 }

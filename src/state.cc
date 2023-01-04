@@ -42,11 +42,7 @@ int State::read(std::vector<std::string> info)
 
         std::string filename = info[i].substr(find_char_begin(info[i], ':') + 1, info[i].length());
 
-        Frame fr = {
-            id,
-            filename,
-        };
-
+        Frame fr = frame_new(id, filename);
         frames.push_back(fr);
     }
 

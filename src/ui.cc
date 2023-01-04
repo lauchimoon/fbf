@@ -207,6 +207,8 @@ void UI::draw(State state)
 
     // Draw frame
     RenderTexture rt_draw = state.frames[state.current_frame].draw_texture;
+    Texture visible_texture = state.frames[state.current_frame].visible_texture;
+    DrawTextureRec(visible_texture, Rectangle{ 0.0f, 0.0f, float(visible_texture.width), -float(visible_texture.height) }, Vector2{ outline_clip.x, outline_clip.y }, WHITE);
     DrawTextureRec(rt_draw.texture, Rectangle{ 0.0f, 0.0f, float(rt_draw.texture.width), -float(rt_draw.texture.height) }, Vector2{ outline_clip.x, outline_clip.y }, WHITE);
 
     // Clip outline
@@ -292,8 +294,7 @@ void UI::update(State *state)
 
             // Load frames
             for (int i = 1; i < state->nframes + 1; i++) {
-                state->frames[i - 1].draw_texture = LoadRenderTexture(CLIP_SIZE_W, CLIP_SIZE_H);
-                state->frames[i - 1].draw_texture.texture = LoadTexture(state->frames[i].img_path.c_str());
+                state->frames[i - 1].visible_texture = LoadTexture(state->frames[i].img_path.c_str());
             }
         } else {
             show_msg = msg_tmp;
