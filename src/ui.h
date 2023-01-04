@@ -18,7 +18,7 @@ struct UI {
     Color brush_color;
     float alpha_value;
 
-    void draw(State state);
+    void draw(State *state);
     void update(State *state);
     void end(void);
     void display_message(std::string msg);

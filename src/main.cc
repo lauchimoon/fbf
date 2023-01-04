@@ -38,7 +38,7 @@ int main()
 
         ClearBackground(WHITE);
 
-        ui.draw(state);
+        ui.draw(&state);
 
         // Draw logo
         DrawTexture(fbf_logo, GetScreenWidth() - 200, 15, WHITE);

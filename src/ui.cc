@@ -15,6 +15,7 @@ std::string msg = "";
 char stateload_filename[TEXTSIZE] = { 0 };
 Vector2 virtual_mouse = { 0, 0 };
 float brush_thickness = 5.0f;
+std::map<int, RenderTexture> export_target;
 
 enum {
     msg_tmp = 1,
@@ -79,11 +80,12 @@ UI ui_new(void)
     show_msg = 0;
     msg_time = MESSAGE_DURATION;
     msg = "";
+    export_target[0] = LoadRenderTexture(CLIP_SIZE_W, CLIP_SIZE_H);
 
     return ui;
 }
 
-void UI::draw(State state)
+void UI::draw(State *state)
 {
     // Title box
     box_title.draw(false);
@@ -95,7 +97,7 @@ void UI::draw(State state)
 
     // Draw shade if component is selected
     std::string comp_key = "";
-    switch (state.component_selected) {
+    switch (state->component_selected) {
         case COMP_TYPE_IMG: comp_key = "imag"; break;
         case COMP_TYPE_DRAW: comp_key = "draw"; break;
         case COMP_TYPE_ERASE: comp_key = "erase"; break;
@@ -158,7 +160,7 @@ void UI::draw(State state)
     brush_color.a = ColorFromNormalized(Vector4{0.0f, 0.0f, 0.0f, alpha_value}).a;
 
     // Frame number
-    const char *frame_n_text = TextFormat("Frame %d", state.current_frame + 1);
+    const char *frame_n_text = TextFormat("Frame %d", state->current_frame + 1);
     Vector2 ntext_measures = MeasureTextEx(font, frame_n_text, 64.0f, 2.0f);
     DrawTextEx(font, frame_n_text, Vector2{float(GetScreenWidth()/2 - ntext_measures.x/2.0f), outline_clip.y + outline_clip.height + 10.0f}, 64.0f, 2.0f, BLACK);
 
@@ -168,7 +170,7 @@ void UI::draw(State state)
     DrawTextEx(font, "FPS", Vector2{(outline_components.x + outline_components.width)/2.0f - fpstext_measures.x/2.0f, box_fps.bounds.y - 70.0f}, 64.0f, 2.0f, BLACK);
 
     // Warn that project is not saved
-    if (!state.saved) {
+    if (!state->saved) {
         DrawTextEx(font, "*", Vector2{buttons["save"].bounds.x + buttons["save"].bounds.width + 10.0f, buttons["save"].bounds.y}, 64.0f, 2.0f, DARKGRAY);
     }
 
@@ -194,10 +196,13 @@ void UI::draw(State state)
     // Paste image on frame
 
     // Draw/erase frame
-    BeginTextureMode(state.frames[state.current_frame].draw_texture);
+    BeginTextureMode(state->frames[state->current_frame].draw_texture);
 
+    Texture visible_texture = state->frames[state->current_frame].visible_texture;
+    //DrawTextureRec(visible_texture, Rectangle{ 0.0f, 0.0f, float(visible_texture.width), -float(visible_texture.height) }, Vector2{ 0.0f, 0.0f }, WHITE);
     if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(GetMousePosition(), outline_clip)) {
-        if (state.component_selected == COMP_TYPE_DRAW) {
+        if (state->component_selected == COMP_TYPE_DRAW) {
+            state->saved = false;
             DrawCircleV(virtual_mouse, brush_thickness, brush_color);
         }
     }
@@ -206,15 +211,14 @@ void UI::draw(State state)
     // Write text on frame
 
     // Draw frame
-    RenderTexture rt_draw = state.frames[state.current_frame].draw_texture;
-    Texture visible_texture = state.frames[state.current_frame].visible_texture;
+    RenderTexture rt_draw = state->frames[state->current_frame].draw_texture;
     DrawTextureRec(visible_texture, Rectangle{ 0.0f, 0.0f, float(visible_texture.width), -float(visible_texture.height) }, Vector2{ outline_clip.x, outline_clip.y }, WHITE);
     DrawTextureRec(rt_draw.texture, Rectangle{ 0.0f, 0.0f, float(rt_draw.texture.width), -float(rt_draw.texture.height) }, Vector2{ outline_clip.x, outline_clip.y }, WHITE);
 
     // Clip outline
     DrawRectangleLinesEx(outline_clip, 2, BLACK);
 
-    if (CheckCollisionPointRec(GetMousePosition(), outline_clip) && state.component_selected == COMP_TYPE_DRAW) {
+    if (CheckCollisionPointRec(GetMousePosition(), outline_clip) && state->component_selected == COMP_TYPE_DRAW) {
         DrawCircleV(GetMousePosition(), brush_thickness, brush_color);
     }
 }
@@ -315,7 +319,15 @@ void UI::update(State *state)
                 state->frames[i].img_path = std::string(GetWorkingDirectory()) + "/" + state->project_dirname + "frames/" + std::to_string(i) + ".png";
 
                 // Write render texture data to image path files
-                Image dummy = LoadImageFromTexture(state->frames[i].draw_texture.texture);
+                export_target[i] = LoadRenderTexture(CLIP_SIZE_W, CLIP_SIZE_H);
+                BeginTextureMode(export_target[i]);
+                    Texture visible_texture = state->frames[state->current_frame].visible_texture;
+                    RenderTexture rt_draw = state->frames[state->current_frame].draw_texture;
+                    DrawTextureRec(visible_texture, Rectangle{ 0.0f, 0.0f, float(visible_texture.width), -float(visible_texture.height) }, Vector2{ 0.0f, 0.0f }, WHITE);
+                    DrawTextureRec(rt_draw.texture, Rectangle{ 0.0f, 0.0f, float(rt_draw.texture.width), -float(rt_draw.texture.height) }, Vector2{ 0.0f, 0.0f }, WHITE);
+                EndTextureMode();
+
+                Image dummy = LoadImageFromTexture(export_target[i].texture);
                 ExportImage(dummy, state->frames[i].img_path.c_str());
                 UnloadImage(dummy);
             }
@@ -375,6 +387,10 @@ void UI::end(void)
 {
     box_title.end();
     box_fps.end();
+
+    for (int i = 0; i < export_target.size(); i++) {
+        UnloadRenderTexture(export_target[i]);
+    }
 }
 
 void UI::display_message(std::string msg)
