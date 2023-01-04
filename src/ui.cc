@@ -289,6 +289,12 @@ void UI::update(State *state)
             for (int i = 0; i < ndigits(state->anim_fps); i++) {
                 box_fps.text[i] = std::to_string(state->anim_fps)[i];
             }
+
+            // Load frames
+            for (int i = 1; i < state->nframes + 1; i++) {
+                state->frames[i - 1].draw_texture = LoadRenderTexture(CLIP_SIZE_W, CLIP_SIZE_H);
+                state->frames[i - 1].draw_texture.texture = LoadTexture(state->frames[i].img_path.c_str());
+            }
         } else {
             show_msg = msg_tmp;
             msg = "Nothing was loaded";
@@ -309,7 +315,6 @@ void UI::update(State *state)
 
                 // Write render texture data to image path files
                 Image dummy = LoadImageFromTexture(state->frames[i].draw_texture.texture);
-                ImageFlipVertical(&dummy);
                 ExportImage(dummy, state->frames[i].img_path.c_str());
                 UnloadImage(dummy);
             }
