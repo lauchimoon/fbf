@@ -36,6 +36,7 @@ UI ui_new(void)
         {"new", button_new({10.0f, 70.0f, 148.0f, 48.0f}, "New Project")},
         {"open", button_new({168.0f, 70.0f, 148.0f, 48.0f}, "Open Project")},
         {"save", button_new({326.0f, 70.0f, 148.0f, 48.0f}, "Save Project")},
+        {"prev", button_new({484.0f, 70.0f, 148.0f, 48.0f}, "Preview")},
         {"egif", button_new({box_title.bounds.x + box_title.bounds.width + 10.0f, box_title.bounds.y, 148.0f, 48.0f}, "Export GIF")},
         {"emp4", button_new({box_title.bounds.x + box_title.bounds.width + 168.0f, box_title.bounds.y, 148.0f, 48.0f}, "Export MP4")},
         {"imag", button_new({components_outline.x + 5.0f, components_outline.y + 5.0f, components_outline.width - 10.0f, 64.0f}, "Image")},
@@ -83,8 +84,47 @@ void UI::draw(State state)
         DrawTextEx(font, "Title", Vector2{box_title.bounds.x + 5.0f, box_title.bounds.y + 8.0f}, 32.0f, 2.0f, Fade(GRAY, 0.5f));
 
     // Buttons
-    for (auto b : buttons)
-        b.second.draw();
+    for (auto b : buttons) {
+        if (b.first != "prev") { // Preview button has custom colors
+            b.second.draw();
+        }
+    }
+
+    // Change preview button style
+    int border_color_normal_prev = GuiGetStyle(BUTTON, BORDER_COLOR_NORMAL);
+    int base_color_normal_prev = GuiGetStyle(BUTTON, BASE_COLOR_NORMAL);
+    int text_color_normal_prev = GuiGetStyle(BUTTON, TEXT_COLOR_NORMAL);
+
+    int border_color_focused_prev = GuiGetStyle(BUTTON, BORDER_COLOR_FOCUSED);
+    int base_color_focused_prev = GuiGetStyle(BUTTON, BASE_COLOR_FOCUSED);
+    int text_color_focused_prev = GuiGetStyle(BUTTON, TEXT_COLOR_FOCUSED);
+
+    int border_color_pressed_prev = GuiGetStyle(BUTTON, BORDER_COLOR_PRESSED);
+    int base_color_pressed_prev = GuiGetStyle(BUTTON, BASE_COLOR_PRESSED);
+    int text_color_pressed_prev = GuiGetStyle(BUTTON, TEXT_COLOR_PRESSED);
+
+    GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, ColorToInt(DARKGREEN));
+    GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(LIME));
+    GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(Color{ LIGHTGRAY.r + 25, LIGHTGRAY.g + 25, LIGHTGRAY.b + 25, 255 }));
+    GuiSetStyle(BUTTON, BORDER_COLOR_FOCUSED, ColorToInt(LIME));
+    GuiSetStyle(BUTTON, BASE_COLOR_FOCUSED, ColorToInt(GREEN));
+    GuiSetStyle(BUTTON, TEXT_COLOR_FOCUSED, ColorToInt(WHITE));
+    GuiSetStyle(BUTTON, BORDER_COLOR_PRESSED, ColorToInt(GREEN));
+    GuiSetStyle(BUTTON, BASE_COLOR_PRESSED, ColorToInt(Color{ 157, 255, 150, 255 }));
+    GuiSetStyle(BUTTON, TEXT_COLOR_PRESSED, ColorToInt(WHITE));
+
+    buttons["prev"].draw();
+
+    // Return to normal
+    GuiSetStyle(BUTTON, BORDER_COLOR_NORMAL, border_color_normal_prev);
+    GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, base_color_normal_prev);
+    GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, text_color_normal_prev);
+    GuiSetStyle(BUTTON, BORDER_COLOR_FOCUSED, border_color_focused_prev);
+    GuiSetStyle(BUTTON, BASE_COLOR_FOCUSED, base_color_focused_prev);
+    GuiSetStyle(BUTTON, TEXT_COLOR_FOCUSED, text_color_focused_prev);
+    GuiSetStyle(BUTTON, BORDER_COLOR_PRESSED, border_color_pressed_prev);
+    GuiSetStyle(BUTTON, BASE_COLOR_PRESSED, base_color_pressed_prev);
+    GuiSetStyle(BUTTON, TEXT_COLOR_PRESSED, text_color_pressed_prev);
 
     // Clip outline
     DrawRectangleLinesEx(outline_clip, 2, BLACK);
@@ -163,10 +203,6 @@ void UI::update(State *state)
         state->current_frame = state->nframes - 1;
         state->saved = false;
     }
-
-    printf("%s\n", box_title.text);
-    printf("%s\n", box_fps.text);
-    printf("%s\n", box_frame_dur.text);
 
     // New project
     if (buttons["new"].pressed()) {
