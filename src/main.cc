@@ -18,7 +18,6 @@ int main()
     UI ui = ui_new();
     ui.font = font;
 
-    Color brush_color = BLACK;
     Texture fbf_logo = LoadTexture("assets/logo.png");
 
     SetTargetFPS(60);

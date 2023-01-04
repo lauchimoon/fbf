@@ -7,7 +7,6 @@
 #include <ctype.h>
 
 int find_char_begin(std::string s, char c);
-int find_char_end(std::string s, char c);
 std::string replace_all(std::string s, char c1, char c2);
 std::string lowercase(std::string s);
 
@@ -20,7 +19,7 @@ State state_new()
     std::vector<Frame> frames = {};
     bool saved = true;
 
-    frames.push_back(frame_new(0, "(none)", DEFAULT_DURATION));
+    frames.push_back(frame_new(0, "(none)"));
     return State{ current_frame, nframes, fps, title, frames, saved };
 }
 
@@ -40,16 +39,11 @@ int State::read(std::vector<std::string> info)
         std::string id_string = info[i].substr(0, (find_char_begin(info[i], ':')));
         int id = std::atoi(id_string.c_str());
 
-        std::string filename_no_id = info[i].substr(find_char_begin(info[i], ':') + 1, info[i].length());
-        std::string filename = filename_no_id.substr(0, find_char_end(filename_no_id, ':'));
-
-        std::string duration_str = info[i].substr(find_char_end(info[i], ':') + 1, info[i].length());
-        int duration = std::atoi(duration_str.c_str());
+        std::string filename = info[i].substr(find_char_begin(info[i], ':') + 1, info[i].length());
 
         Frame fr = {
             id,
             filename,
-            duration,
         };
 
         frames.push_back(fr);
@@ -76,7 +70,7 @@ void State::write(void)
     fprintf(f, "fps:%d\n", anim_fps);
     
     for (int i = 0; i < nframes; i++) {
-        fprintf(f, "%d:%s:%d\n", frames[i].id, frames[i].img_path.c_str(), frames[i].duration);
+        fprintf(f, "%d:%s\n", frames[i].id, frames[i].img_path.c_str());
     }
 
     fclose(f);
@@ -88,16 +82,6 @@ void State::write(void)
 int find_char_begin(std::string s, char c)
 {
     for (int i = 0; i < s.length(); i++) {
-        if (s[i] == c)
-            return i;
-    }
-
-    return -1;
-}
-
-int find_char_end(std::string s, char c)
-{
-    for (int i = s.length(); i > -1; i--) {
         if (s[i] == c)
             return i;
     }

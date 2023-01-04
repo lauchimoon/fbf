@@ -10,9 +10,8 @@ enum {
     COMPONENTS_BOXSIZE_H = CLIP_SIZE_H,
     MIN_FPS_VALUE = 1,
     MAX_FPS_VALUE = 1000,
-    DEFAULT_DURATION = 10,
     MESSAGE_DURATION = 120
 };
 #define TITLE "fbf"
-#define DEFAULT_FRAME_NEW(id) frame_new(id, "(none)", DEFAULT_DURATION)
+#define DEFAULT_FRAME_NEW(id) frame_new(id, "(none)")
 

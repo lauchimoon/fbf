@@ -10,12 +10,13 @@ struct UI {
     Rectangle outline_clip;
     Rectangle outline_components;
     Rectangle outline_color;
+    Rectangle outline_alpha;
     Textbox box_title;
     Textbox box_fps;
-    Textbox box_frame_dur;
     std::map<std::string, Button> buttons;
     Font font;
     Color brush_color;
+    float alpha_value;
 
     void draw(State state);
     void update(State *state);
