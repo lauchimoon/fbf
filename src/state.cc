@@ -21,6 +21,7 @@ State state_new()
     int component = -1;
 
     frames.push_back(frame_new(0, "none"));
+
     return State{ current_frame, nframes, fps, title, frames, saved, component };
 }
 

@@ -6,6 +6,7 @@
 #include "raymath.h"
 #include <sstream>
 #include "components.h"
+#include <stdlib.h>
 
 #define MIN(a, b) ((a) < (b)? (a) : (b))
 
@@ -292,6 +293,7 @@ void UI::update(State *state)
 
     // Load project
     if (buttons["open"].pressed()) {
+        state->frames.clear(); // avoid having frames added
         int result = file_dialog("Open fbf project", stateload_filename, "*.fbfp", "fbf project (*.fbfp)");
         if (result == 0) {
             std::string fileread = read_file_to_str(stateload_filename);
@@ -307,8 +309,8 @@ void UI::update(State *state)
             }
 
             // Load frames
-            for (int i = 1; i < state->nframes + 1; i++) {
-                state->frames[i - 1].visible_texture = LoadTexture(state->frames[i].img_path.c_str());
+            for (int i = 0; i < state->nframes; i++) {
+                state->frames[i].visible_texture = LoadTexture(state->frames[i].img_path.c_str());
             }
         } else {
             show_msg = msg_tmp;
@@ -327,12 +329,16 @@ void UI::update(State *state)
             for (int i = 0; i < state->nframes; i++) {
                 // Set names for each frame image path
                 state->frames[i].img_path = std::string(GetWorkingDirectory()) + "/" + state->project_dirname + "frames/" + std::to_string(i) + ".png";
+            }
 
+            state->write(); // Write the project file, create directories
+
+            for (int i = 0; i < state->nframes; i++) {
                 // Write render texture data to image path files
                 export_target[i] = LoadRenderTexture(CLIP_SIZE_W, CLIP_SIZE_H);
                 BeginTextureMode(export_target[i]);
-                    Texture visible_texture = state->frames[state->current_frame].visible_texture;
-                    RenderTexture rt_draw = state->frames[state->current_frame].draw_texture;
+                    Texture visible_texture = state->frames[i].visible_texture;
+                    RenderTexture rt_draw = state->frames[i].draw_texture;
                     DrawTextureRec(visible_texture, Rectangle{ 0.0f, 0.0f, float(visible_texture.width), -float(visible_texture.height) }, Vector2{ 0.0f, 0.0f }, WHITE);
                     DrawTextureRec(rt_draw.texture, Rectangle{ 0.0f, 0.0f, float(rt_draw.texture.width), -float(rt_draw.texture.height) }, Vector2{ 0.0f, 0.0f }, WHITE);
                 EndTextureMode();
@@ -342,7 +348,6 @@ void UI::update(State *state)
                 UnloadImage(dummy);
             }
 
-            state->write();
             show_msg = msg_tmp;
             msg = "Saved project";
         } else {
