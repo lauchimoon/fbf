@@ -12,11 +12,9 @@ enum {
 struct Component {
     int id;
     int type;
-    bool movable;
     bool resizable;
-    int thickness;
+    bool selected;
     int font_size;
-    bool is_clicked;
     Color color;
     Texture texture;
 };
