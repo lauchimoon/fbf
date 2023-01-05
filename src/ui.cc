@@ -16,6 +16,7 @@ char stateload_filename[TEXTSIZE] = { 0 };
 Vector2 virtual_mouse = { 0, 0 };
 float brush_thickness = 5.0f;
 std::map<int, RenderTexture> export_target;
+Color erase_color = WHITE;
 
 enum {
     msg_tmp = 1,
@@ -198,12 +199,14 @@ void UI::draw(State *state)
     // Draw/erase frame
     BeginTextureMode(state->frames[state->current_frame].draw_texture);
 
-    Texture visible_texture = state->frames[state->current_frame].visible_texture;
-    //DrawTextureRec(visible_texture, Rectangle{ 0.0f, 0.0f, float(visible_texture.width), -float(visible_texture.height) }, Vector2{ 0.0f, 0.0f }, WHITE);
     if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(GetMousePosition(), outline_clip)) {
         if (state->component_selected == COMP_TYPE_DRAW) {
             state->saved = false;
             DrawCircleV(virtual_mouse, brush_thickness, brush_color);
+        }
+        if (state->component_selected == COMP_TYPE_ERASE) {
+            state->saved = false;
+            DrawCircleV(virtual_mouse, brush_thickness, erase_color);
         }
     }
     EndTextureMode();
@@ -211,6 +214,7 @@ void UI::draw(State *state)
     // Write text on frame
 
     // Draw frame
+    Texture visible_texture = state->frames[state->current_frame].visible_texture;
     RenderTexture rt_draw = state->frames[state->current_frame].draw_texture;
     DrawTextureRec(visible_texture, Rectangle{ 0.0f, 0.0f, float(visible_texture.width), -float(visible_texture.height) }, Vector2{ outline_clip.x, outline_clip.y }, WHITE);
     DrawTextureRec(rt_draw.texture, Rectangle{ 0.0f, 0.0f, float(rt_draw.texture.width), -float(rt_draw.texture.height) }, Vector2{ outline_clip.x, outline_clip.y }, WHITE);
@@ -218,8 +222,14 @@ void UI::draw(State *state)
     // Clip outline
     DrawRectangleLinesEx(outline_clip, 2, BLACK);
 
-    if (CheckCollisionPointRec(GetMousePosition(), outline_clip) && state->component_selected == COMP_TYPE_DRAW) {
-        DrawCircleV(GetMousePosition(), brush_thickness, brush_color);
+    if (CheckCollisionPointRec(GetMousePosition(), outline_clip)) {
+        if (state->component_selected == COMP_TYPE_DRAW) { // Indicate where brush is
+            DrawCircleV(GetMousePosition(), brush_thickness, brush_color);
+        }
+        if (state->component_selected == COMP_TYPE_ERASE) {
+            DrawCircleV(GetMousePosition(), brush_thickness, erase_color);
+            DrawCircleLines(GetMouseX(), GetMouseY(), brush_thickness, BLACK);
+        }
     }
 }
 
