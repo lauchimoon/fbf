@@ -22,7 +22,12 @@ struct Component {
     Rectangle box;
     Color color;
     Texture texture;
+
+    void end(void);
 };
+
+Component component_new(std::string name, int nframe, std::string img_path, Vector2 pos);
+Component component_new(std::string name, int nframe, std::string text, Rectangle box, Color color);
 
 class ComponentManager {
 public:

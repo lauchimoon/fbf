@@ -24,12 +24,6 @@ int main()
 
     Texture fbf_logo = LoadTexture("assets/logo.png");
 
-    std::string s = read_file_to_str("project/components.fbfp");
-    std::vector<std::string> info = split_str(s, '\n');
-
-    state.comp_manager.read(info);
-    std::cout << state.comp_manager.get("img1").name << std::endl;
-
     SetTargetFPS(60);
 
     while (!WindowShouldClose()) {

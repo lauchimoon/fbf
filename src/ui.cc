@@ -14,6 +14,7 @@ int show_msg = 0;
 int msg_time = MESSAGE_DURATION;
 std::string msg = "";
 char stateload_filename[TEXTSIZE] = { 0 };
+char imgload_filename[TEXTSIZE] = { 0 };
 Vector2 virtual_mouse = { 0, 0 };
 float brush_thickness = 5.0f;
 std::map<int, RenderTexture> export_target;
@@ -89,6 +90,8 @@ UI ui_new(void)
 
 void UI::draw(State *state)
 {
+    #define SHORTEN_STATE_FRAMES (state->frames[state->current_frame])
+
     // Title box
     box_title.draw(false);
 
@@ -100,10 +103,8 @@ void UI::draw(State *state)
     // Draw shade if component is selected
     std::string comp_key = "";
     switch (state->component_selected) {
-        case COMP_TYPE_IMG: comp_key = "imag"; break;
         case COMP_TYPE_DRAW: comp_key = "draw"; break;
         case COMP_TYPE_ERASE: comp_key = "erase"; break;
-        case COMP_TYPE_TEXT: comp_key = "text"; break;
     }
 
     if (comp_key != "") {
@@ -196,6 +197,27 @@ void UI::draw(State *state)
     // Components
 
     // Paste image on frame
+    for (int i = 0; i < SHORTEN_STATE_FRAMES.components.size(); i++) {
+        #define SHORTEN_COMPONENTS (SHORTEN_STATE_FRAMES.components[i])
+        if (SHORTEN_COMPONENTS.texture.id != 0) {
+            DrawTexturePro(SHORTEN_COMPONENTS.texture, Rectangle{ 0.0f, 0.0f, float(SHORTEN_COMPONENTS.texture.width), float(SHORTEN_COMPONENTS.texture.height) }, Rectangle{ SHORTEN_COMPONENTS.box.x, SHORTEN_COMPONENTS.box.y, SHORTEN_COMPONENTS.box.width, SHORTEN_COMPONENTS.box.height }, Vector2{ 0.0f, 0.0f }, 0.0f, SHORTEN_COMPONENTS.color);
+        }
+
+        // Drag the image
+        if (CheckCollisionPointRec(GetMousePosition(), SHORTEN_COMPONENTS.box) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && state->component_selected == COMP_TYPE_IMG) {
+            SHORTEN_COMPONENTS.selected = !SHORTEN_COMPONENTS.selected;
+        } else if (!IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+            SHORTEN_COMPONENTS.selected = false;
+        }
+
+        if (SHORTEN_COMPONENTS.selected) {
+            SHORTEN_COMPONENTS.box.x += GetMouseDelta().x;
+            SHORTEN_COMPONENTS.box.y += GetMouseDelta().y;
+
+            // Draw outline to indicate it's selected
+            DrawRectangleLinesEx(SHORTEN_COMPONENTS.box, 3.0f, RED);
+        }
+    }
 
     // Draw/erase frame
     BeginTextureMode(state->frames[state->current_frame].draw_texture);
@@ -361,6 +383,13 @@ void UI::update(State *state)
     // Image
     if (buttons["imag"].pressed()) {
         state->component_selected = COMP_TYPE_IMG;
+        int result = file_dialog("Open image", imgload_filename, "*.png", "Supported types (*.png)");
+        if (result == 0) {
+            state->frames[state->current_frame].components.push_back(component_new("sample", state->current_frame, std::string(imgload_filename), Vector2{ outline_clip.x, outline_clip.y }));
+        } else {
+            show_msg = msg_tmp;
+            msg = "Nothing was loaded";
+        }
     }
 
     // Draw

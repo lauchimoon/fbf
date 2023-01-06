@@ -4,6 +4,22 @@
 int get_type(std::string s);
 std::vector<std::string> split_str(std::string s, char find);
 
+Component component_new(std::string name, int nframe, std::string img_path, Vector2 pos)
+{
+    Texture t = LoadTexture(img_path.c_str());
+    return Component{ name, nframe, COMP_TYPE_IMG, false, img_path, "", Rectangle{ pos.x, pos.y, float(t.width), float(t.height) }, WHITE, t };
+}
+
+Component component_new(std::string name, int nframe, std::string text, Rectangle box, Color color)
+{
+    return Component{ name, nframe, COMP_TYPE_TEXT, false, "", text, box, color, Texture{} };
+}
+
+void Component::end(void)
+{
+    UnloadTexture(texture);
+}
+
 ComponentManager::ComponentManager()
 {}
 
@@ -15,7 +31,8 @@ void ComponentManager::read(std::vector<std::string> info)
     for (int i = 1; i < info.size(); i++) {
         std::vector<std::string> sp = split_str(info[i], ':');
 
-        m[name].name = sp[0];
+        std::string name = sp[0];
+        m[name].name = name;
         m[name].nframe = std::atoi(sp[1].c_str());
         m[name].type = get_type(sp[2]);
         m[name].selected = false;
