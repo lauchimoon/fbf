@@ -10,6 +10,12 @@ Frame frame_new(int id, std::string img_path)
     return Frame{ id, img_path, draw_rt };
 }
 
+void Frame::write_components(void)
+{}
+
+void Frame::load_components(void)
+{}
+
 void Frame::end(void)
 {
     UnloadRenderTexture(draw_texture);

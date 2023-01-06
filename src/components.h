@@ -1,6 +1,9 @@
 #pragma once
 
 #include "raylib.h"
+#include <string>
+#include <vector>
+#include <map>
 
 enum {
     COMP_TYPE_IMG = 0,
@@ -10,12 +13,28 @@ enum {
 };
 
 struct Component {
-    int id;
+    std::string name;
+    int nframe;
     int type;
-    bool resizable;
     bool selected;
-    int font_size;
+    std::string img_path;
+    std::string text;
+    Rectangle box;
     Color color;
     Texture texture;
 };
 
+class ComponentManager {
+public:
+    ComponentManager();
+    ~ComponentManager();
+
+    void read(std::vector<std::string> info);
+    void write(void);
+    Component get(std::string name);
+
+    std::string project_at;
+
+private:
+    std::map<std::string, Component> m;
+};

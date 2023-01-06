@@ -298,7 +298,7 @@ void UI::update(State *state)
         if (result == 0) {
             std::string fileread = read_file_to_str(stateload_filename);
             std::vector<std::string> info = split_str(fileread, '\n');
-            state->read(info);
+            state->read(info, {});
 
             for (int i = 0; i < state->anim_title.length(); i++) {
                 box_title.text[i] = state->anim_title[i];

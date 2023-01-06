@@ -19,13 +19,14 @@ State state_new()
     std::vector<Frame> frames = {};
     bool saved = true;
     int component = -1;
+    ComponentManager comp_manager = ComponentManager();
 
     frames.push_back(frame_new(0, "none"));
 
-    return State{ current_frame, nframes, fps, title, frames, saved, component };
+    return State{ current_frame, nframes, fps, title, frames, saved, component, "", comp_manager };
 }
 
-int State::read(std::vector<std::string> info)
+int State::read(std::vector<std::string> info, std::vector<std::string> info_comp)
 {
     // Validate file
     if (info[0] != "fbf")
@@ -46,6 +47,8 @@ int State::read(std::vector<std::string> info)
         Frame fr = frame_new(id, filename);
         frames.push_back(fr);
     }
+
+    comp_manager.read(info_comp);
 
     return 0;
 }
@@ -69,6 +72,8 @@ void State::write(void)
     for (int i = 0; i < nframes; i++) {
         fprintf(f, "%d:%s\n", frames[i].id, frames[i].img_path.c_str());
     }
+
+    comp_manager.write();
 
     fclose(f);
 }

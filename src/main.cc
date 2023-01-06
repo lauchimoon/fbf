@@ -5,6 +5,10 @@
 #include "raylib.h"
 #include "ui.h"
 #include "raygui.h"
+#include <iostream>
+
+std::string read_file_to_str(const char *filename);
+std::vector<std::string> split_str(std::string s, char find);
 
 int main()
 {
@@ -19,6 +23,12 @@ int main()
     ui.font = font;
 
     Texture fbf_logo = LoadTexture("assets/logo.png");
+
+    std::string s = read_file_to_str("project/components.fbfp");
+    std::vector<std::string> info = split_str(s, '\n');
+
+    state.comp_manager.read(info);
+    std::cout << state.comp_manager.get("img1").name << std::endl;
 
     SetTargetFPS(60);
 
