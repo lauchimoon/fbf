@@ -334,9 +334,14 @@ void UI::update(State *state)
     // Load project
     if (buttons["open"].pressed()) {
         state->frames.clear(); // avoid having frames added
-        int result = file_dialog("Open fbf project", stateload_filename, "*.fbfp", "fbf project (*.fbfp)");
-        if (result == 0) {
-            std::string fileread = read_file_to_str(stateload_filename);
+        const char *dirname = tinyfd_selectFolderDialog("Select project folder", NULL);
+        std::string project_file = std::string(dirname) + "/project.fbfp";
+        std::string frames_dir = std::string(dirname) + "/frames/";
+        bool result1 = FileExists(project_file.c_str());
+        bool result2 = DirectoryExists(frames_dir.c_str());
+
+        if (result1 && result2) {
+            std::string fileread = read_file_to_str(project_file.c_str());
             std::vector<std::string> info = split_str(fileread, '\n');
             state->read(info, {});
 
@@ -355,7 +360,7 @@ void UI::update(State *state)
             }
         } else {
             show_msg = msg_tmp;
-            msg = "Nothing was loaded";
+            msg = "There was an issue while loading";
         }
     }
 
