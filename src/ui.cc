@@ -64,7 +64,7 @@ UI ui_new(State *state)
         {"prev", button_new({clip_outline.x, clip_outline.y + clip_outline.height, 148.0f, 48.0f}, "Preview")},
     };
 
-    Textbox box_frame_dur = textbox_new({buttons[">>"].bounds.x + 70.0f, buttons[">>"].bounds.y + 8.0f, components_outline.width + 28.0f, 48.0f});
+    //Textbox box_frame_dur = textbox_new({buttons[">>"].bounds.x + 70.0f, buttons[">>"].bounds.y + 8.0f, components_outline.width + 28.0f, 48.0f});
 
     ui.outline_clip = clip_outline;
     ui.outline_components = components_outline;
