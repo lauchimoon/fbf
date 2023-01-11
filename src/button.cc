@@ -1,11 +1,20 @@
 #include "button.h"
 #include "raygui.h"
 
-void Button::draw() { GuiButton(bounds, text); }
+void Button::draw()
+{
+    if (!enabled) {
+        GuiDisable();
+        GuiButton(bounds, text);
+        GuiEnable();
+    } else {
+        GuiButton(bounds, text);
+    }
+}
 
 bool Button::pressed()
 {
-    if (CheckCollisionPointRec(GetMousePosition(), bounds))
+    if (CheckCollisionPointRec(GetMousePosition(), bounds) && enabled)
         return IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 
     return false;   
@@ -13,5 +22,5 @@ bool Button::pressed()
 
 Button button_new(Rectangle bounds, const char *text)
 {
-    return Button{ bounds, text };
+    return Button{ bounds, text, true };
 }

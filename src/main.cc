@@ -7,9 +7,6 @@
 #include "raygui.h"
 #include <iostream>
 
-std::string read_file_to_str(const char *filename);
-std::vector<std::string> split_str(std::string s, char find);
-
 int main()
 {
     SetTraceLogLevel(LOG_NONE);
@@ -44,8 +41,9 @@ int main()
 
         ui.draw(&state);
 
-        // Draw logo
+        // Draw logo and version
         DrawTexture(fbf_logo, GetScreenWidth() - 200, 15, WHITE);
+        DrawTextEx(font, VERSION, Vector2{ GetScreenWidth() - 70, GetScreenHeight() - 35 }, 32.0f, 2.0f, BLACK);
 
         EndDrawing();
     }

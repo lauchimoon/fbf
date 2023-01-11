@@ -111,6 +111,10 @@ void UI::draw(State *state)
         DrawRectangle(buttons[comp_key].bounds.x - 5, buttons[comp_key].bounds.y - 4, outline_components.width, buttons[comp_key].bounds.height + 8, Fade(BLACK, 0.5f));
     }
 
+    buttons["imag"].enabled = false;
+    buttons["text"].enabled = false;
+    buttons["emp4"].enabled = false;
+
     for (auto b : buttons) {
         if (b.first != "prev") { // Preview button has custom colors
             b.second.draw();
@@ -204,17 +208,24 @@ void UI::draw(State *state)
         }
 
         // Drag the image
-        if (CheckCollisionPointRec(GetMousePosition(), SHORTEN_COMPONENTS.box) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && state->component_selected == COMP_TYPE_IMG) {
-            SHORTEN_COMPONENTS.selected = !SHORTEN_COMPONENTS.selected;
-        } else if (!IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
-            SHORTEN_COMPONENTS.selected = false;
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            if (CheckCollisionPointRec(GetMousePosition(), SHORTEN_COMPONENTS.box)) {
+                SHORTEN_COMPONENTS.selected = !SHORTEN_COMPONENTS.selected;
+            } else {
+                SHORTEN_COMPONENTS.selected = false;
+            }
         }
 
+        /*
         if (SHORTEN_COMPONENTS.selected) {
             SHORTEN_COMPONENTS.box.x += GetMouseDelta().x;
             SHORTEN_COMPONENTS.box.y += GetMouseDelta().y;
 
             // Draw outline to indicate it's selected
+            DrawRectangleLinesEx(SHORTEN_COMPONENTS.box, 3.0f, RED);
+        }
+        */
+        if (SHORTEN_COMPONENTS.selected) {
             DrawRectangleLinesEx(SHORTEN_COMPONENTS.box, 3.0f, RED);
         }
     }

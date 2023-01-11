@@ -5,6 +5,7 @@
 struct Button {
     Rectangle bounds;
     const char *text;
+    bool enabled;
 
     void draw();
     bool pressed();

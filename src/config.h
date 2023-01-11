@@ -13,4 +13,5 @@ enum {
     MESSAGE_DURATION = 120
 };
 #define TITLE "fbf"
+#define VERSION "v0.5b"
 
