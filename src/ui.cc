@@ -84,7 +84,10 @@ UI ui_new(State *state)
     msg_time = MESSAGE_DURATION;
     msg = "";
     export_target[0] = LoadRenderTexture(CLIP_SIZE_W, CLIP_SIZE_H);
+
     state->copied_frame = frame_new(state->frames[state->current_frame].id, "(none)");
+    state->copied_frame.draw_texture = state->frames[state->current_frame].draw_texture;
+    state->copied_frame.visible_texture = state->frames[state->current_frame].visible_texture;
 
     return ui;
 }
@@ -277,6 +280,9 @@ void UI::update(State *state)
 
     state->frames[state->current_frame].id = state->current_frame;
 
+    //state->copied_frame.draw_texture = state->frames[state->current_frame].draw_texture;
+    //state->copied_frame.visible_texture = state->frames[state->current_frame].visible_texture;
+
     // Compute virtual mouse position for drawing to render texture
     float scale = MIN(float(GetScreenWidth()/CLIP_SIZE_W), float(GetScreenHeight()/CLIP_SIZE_H));
     Vector2 mouse = GetMousePosition();
@@ -443,6 +449,7 @@ void UI::update(State *state)
 
     // Copy
     if (buttons["copy"].pressed()) {
+        state->saved = false;
         state->copied_frame = frame_new(state->frames[state->current_frame].id, "(none)");
         state->copied_frame.draw_texture = state->frames[state->current_frame].draw_texture;
         state->copied_frame.visible_texture = state->frames[state->current_frame].visible_texture;
@@ -452,16 +459,21 @@ void UI::update(State *state)
 
     // Paste
     if (buttons["paste"].pressed()) {
-        Image dummy = LoadImageFromTexture(state->copied_frame.draw_texture.texture);
-        Image dummy2 = LoadImageFromTexture(state->copied_frame.visible_texture);
-        UpdateTexture(state->frames[state->current_frame].draw_texture.texture, dummy.data);
-        UpdateTexture(state->frames[state->current_frame].visible_texture, dummy2.data);
-        UnloadImage(dummy2);
-        UnloadImage(dummy);
+        state->saved = false;
+        BeginTextureMode(state->frames[state->current_frame].draw_texture);
+
+        #define copied_frame state->copied_frame
+        #define cf_draw_texture copied_frame.draw_texture
+
+        DrawTextureRec(copied_frame.visible_texture, Rectangle{ 0.0f, 0.0f, float(cf_draw_texture.texture.width), -float(cf_draw_texture.texture.height) }, Vector2{ 0.0f, 0.0f }, WHITE);
+        DrawTextureRec(cf_draw_texture.texture, Rectangle{ 0.0f, 0.0f, float(cf_draw_texture.texture.width), -float(cf_draw_texture.texture.height) }, Vector2{ 0.0f, 0.0f }, WHITE);
+
+        EndTextureMode();
     }
 
     // Delete
     if (buttons["del"].pressed() && state->nframes > 1) {
+        state->saved = false;
         state->frames.erase(state->frames.begin() + state->current_frame);
         state->current_frame--;
     }
