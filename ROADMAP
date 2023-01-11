@@ -1,13 +1,14 @@
-- UI
+x UI
 x Project management
     x New
     x Open
     x Save
 - Components
     - Image
-    - Draw
-    - Erase
+    x Draw
+    x Erase
     - Text
 - Copy and paste frames
+- Onion layering
 - Preview animations
 - Export to GIF
