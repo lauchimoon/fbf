@@ -201,6 +201,7 @@ void UI::draw(State *state)
     // Components
 
     // Paste image on frame
+    /* WIP
     for (int i = 0; i < SHORTEN_STATE_FRAMES.components.size(); i++) {
         #define SHORTEN_COMPONENTS (SHORTEN_STATE_FRAMES.components[i])
         if (SHORTEN_COMPONENTS.texture.id != 0) {
@@ -216,7 +217,6 @@ void UI::draw(State *state)
             }
         }
 
-        /*
         if (SHORTEN_COMPONENTS.selected) {
             SHORTEN_COMPONENTS.box.x += GetMouseDelta().x;
             SHORTEN_COMPONENTS.box.y += GetMouseDelta().y;
@@ -224,11 +224,11 @@ void UI::draw(State *state)
             // Draw outline to indicate it's selected
             DrawRectangleLinesEx(SHORTEN_COMPONENTS.box, 3.0f, RED);
         }
-        */
         if (SHORTEN_COMPONENTS.selected) {
             DrawRectangleLinesEx(SHORTEN_COMPONENTS.box, 3.0f, RED);
         }
     }
+    */
 
     // Draw/erase frame
     BeginTextureMode(state->frames[state->current_frame].draw_texture);

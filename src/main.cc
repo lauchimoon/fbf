@@ -43,7 +43,7 @@ int main()
 
         // Draw logo and version
         DrawTexture(fbf_logo, GetScreenWidth() - 200, 15, WHITE);
-        DrawTextEx(font, VERSION, Vector2{ GetScreenWidth() - 70, GetScreenHeight() - 35 }, 32.0f, 2.0f, BLACK);
+        DrawTextEx(font, VERSION, Vector2{ float(GetScreenWidth() - 70), float(GetScreenHeight() - 35) }, 32.0f, 2.0f, BLACK);
 
         EndDrawing();
     }
