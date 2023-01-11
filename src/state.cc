@@ -83,6 +83,7 @@ void State::end(void)
     for (int i = 0; i < nframes; i++) {
         frames[i].end();
     }
+    copied_frame.end();
 }
 
 // File-specific functions

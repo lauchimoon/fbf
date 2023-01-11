@@ -33,7 +33,7 @@ std::vector<std::string> split_str(std::string s, char find);
 std::string replace_all(std::string s, char c1, char c2);
 std::string lowercase(std::string s);
 
-UI ui_new(void)
+UI ui_new(State *state)
 {
     UI ui = { 0 };
     Rectangle clip_outline = { float(GetScreenWidth()/2 - CLIP_SIZE_W/2), float(GetScreenHeight()/2 - CLIP_SIZE_H/2), float(CLIP_SIZE_W), float(CLIP_SIZE_H) };
@@ -84,6 +84,7 @@ UI ui_new(void)
     msg_time = MESSAGE_DURATION;
     msg = "";
     export_target[0] = LoadRenderTexture(CLIP_SIZE_W, CLIP_SIZE_H);
+    state->copied_frame = frame_new(state->frames[state->current_frame].id, "(none)");
 
     return ui;
 }
@@ -344,6 +345,7 @@ void UI::update(State *state)
             // Load frames
             for (int i = 0; i < state->nframes; i++) {
                 state->frames[i].visible_texture = LoadTexture(state->frames[i].img_path.c_str());
+                //state->frames[i].draw_texture.texture = state->frames[i].visible_texture;
             }
         } else {
             show_msg = msg_tmp;
@@ -441,13 +443,21 @@ void UI::update(State *state)
 
     // Copy
     if (buttons["copy"].pressed()) {
-        state->copied_frame = state->frames[state->current_frame];
+        state->copied_frame = frame_new(state->frames[state->current_frame].id, "(none)");
+        state->copied_frame.draw_texture = state->frames[state->current_frame].draw_texture;
+        state->copied_frame.visible_texture = state->frames[state->current_frame].visible_texture;
         show_msg = msg_tmp;
         msg = std::string(TextFormat("Copied frame %d", state->current_frame + 1));
     }
 
     // Paste
     if (buttons["paste"].pressed()) {
+        Image dummy = LoadImageFromTexture(state->copied_frame.draw_texture.texture);
+        Image dummy2 = LoadImageFromTexture(state->copied_frame.visible_texture);
+        UpdateTexture(state->frames[state->current_frame].draw_texture.texture, dummy.data);
+        UpdateTexture(state->frames[state->current_frame].visible_texture, dummy2.data);
+        UnloadImage(dummy2);
+        UnloadImage(dummy);
     }
 
     // Delete

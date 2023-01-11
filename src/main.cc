@@ -16,7 +16,7 @@ int main()
     GuiSetFont(font);
 
     State state = state_new();
-    UI ui = ui_new();
+    UI ui = ui_new(&state);
     ui.font = font;
 
     Texture fbf_logo = LoadTexture("assets/logo.png");

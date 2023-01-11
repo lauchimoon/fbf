@@ -25,4 +25,4 @@ struct UI {
     void reset(void);
 };
 
-UI ui_new(void);
+UI ui_new(State *state);
