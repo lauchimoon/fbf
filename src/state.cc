@@ -20,10 +20,11 @@ State state_new()
     bool saved = true;
     int component = -1;
     ComponentManager comp_manager = ComponentManager();
+    bool previewing = false;
 
     frames.push_back(frame_new(0, "none"));
 
-    return State{ current_frame, nframes, fps, title, frames, saved, component, "", comp_manager };
+    return State{ current_frame, nframes, fps, title, frames, saved, component, "", comp_manager, previewing };
 }
 
 int State::read(std::vector<std::string> info, std::vector<std::string> info_comp)

@@ -19,6 +19,7 @@ Vector2 virtual_mouse = { 0, 0 };
 float brush_thickness = 5.0f;
 std::map<int, RenderTexture> export_target;
 Color erase_color = WHITE;
+float frames_counter = 0;
 
 enum {
     msg_tmp = 1,
@@ -88,6 +89,8 @@ UI ui_new(State *state)
     state->copied_frame = frame_new(state->frames[state->current_frame].id, "(none)");
     state->copied_frame.draw_texture = state->frames[state->current_frame].draw_texture;
     state->copied_frame.visible_texture = state->frames[state->current_frame].visible_texture;
+
+    frames_counter = 0;
 
     return ui;
 }
@@ -176,7 +179,11 @@ void UI::draw(State *state)
     DrawTextEx(font, frame_n_text, Vector2{float(GetScreenWidth()/2 - ntext_measures.x/2.0f), outline_clip.y + outline_clip.height + 10.0f}, 64.0f, 2.0f, BLACK);
 
     // Change FPS
-    box_fps.draw(true);
+    if (box_fps.draw(true)) {
+        state->anim_fps = std::atoi(box_fps.text);
+        state->saved = false;
+    }
+
     Vector2 fpstext_measures = MeasureTextEx(font, "FPS", 64.0f, 2.0f);
     DrawTextEx(font, "FPS", Vector2{(outline_components.x + outline_components.width)/2.0f - fpstext_measures.x/2.0f, box_fps.bounds.y - 70.0f}, 64.0f, 2.0f, BLACK);
 
@@ -258,7 +265,7 @@ void UI::draw(State *state)
     DrawTextureRec(rt_draw.texture, Rectangle{ 0.0f, 0.0f, float(rt_draw.texture.width), -float(rt_draw.texture.height) }, Vector2{ outline_clip.x, outline_clip.y }, WHITE);
 
     // Onion layer
-    if (state->current_frame - 1 >= 0) {
+    if (state->current_frame - 1 >= 0 && !state->previewing) {
         Texture visible_texture_p = state->frames[state->current_frame - 1].visible_texture;
         RenderTexture rt_draw_p = state->frames[state->current_frame - 1].draw_texture;
         Color faded_white = Fade(WHITE, 0.4f);
@@ -376,6 +383,9 @@ void UI::update(State *state)
     // Save project
     if (buttons["save"].pressed()) {
         if (!std::string(box_title.text).empty() && state->anim_fps > 0) {
+            show_msg = msg_tmp;
+            msg = "Saved project";
+
             state->saved = true;
             state->anim_title = box_title.text;
             state->anim_fps = std::atoi(box_fps.text);
@@ -402,9 +412,6 @@ void UI::update(State *state)
                 ExportImage(dummy, state->frames[i].img_path.c_str());
                 UnloadImage(dummy);
             }
-
-            show_msg = msg_tmp;
-            msg = "Saved project";
         } else {
             show_msg = msg_tmp;
             msg = "Make sure to set all fields with a value";
@@ -491,6 +498,30 @@ void UI::update(State *state)
         state->frames.erase(state->frames.begin() + state->current_frame);
         state->current_frame--;
     }
+
+    // Preview
+    if (buttons["prev"].pressed()) {
+        state->current_frame = 0;
+        state->previewing = !state->previewing;
+    }
+
+    if (state->previewing) {
+        show_msg = msg_forever;
+        msg = "Previewing...";
+        frames_counter += GetFrameTime()*60;
+
+        if (frames_counter >= float(60.0f/float(state->anim_fps))) {
+            state->current_frame++;
+            frames_counter = 0;
+
+            if (state->current_frame >= state->nframes - 1) {
+                state->previewing = false;
+            }
+        }
+    } else {
+        show_msg = 0;
+        msg = "";
+    }
 }
 
 void UI::end(void)
@@ -523,6 +554,8 @@ void UI::reset(void)
     show_msg = 0;
     msg_time = MESSAGE_DURATION;
     msg = "";
+
+    frames_counter = 0;
 }
 
 int ndigits(int n)
