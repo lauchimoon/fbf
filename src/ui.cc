@@ -257,6 +257,15 @@ void UI::draw(State *state)
     DrawTextureRec(visible_texture, Rectangle{ 0.0f, 0.0f, float(visible_texture.width), -float(visible_texture.height) }, Vector2{ outline_clip.x, outline_clip.y }, WHITE);
     DrawTextureRec(rt_draw.texture, Rectangle{ 0.0f, 0.0f, float(rt_draw.texture.width), -float(rt_draw.texture.height) }, Vector2{ outline_clip.x, outline_clip.y }, WHITE);
 
+    // Onion layer
+    if (state->current_frame - 1 >= 0) {
+        Texture visible_texture_p = state->frames[state->current_frame - 1].visible_texture;
+        RenderTexture rt_draw_p = state->frames[state->current_frame - 1].draw_texture;
+        Color faded_white = Fade(WHITE, 0.4f);
+        DrawTextureRec(visible_texture_p, Rectangle{ 0.0f, 0.0f, float(visible_texture_p.width), -float(visible_texture_p.height) }, Vector2{ outline_clip.x, outline_clip.y }, faded_white);
+        DrawTextureRec(rt_draw_p.texture, Rectangle{ 0.0f, 0.0f, float(rt_draw_p.texture.width), -float(rt_draw_p.texture.height) }, Vector2{ outline_clip.x, outline_clip.y }, faded_white);
+    }
+
     // Clip outline
     DrawRectangleLinesEx(outline_clip, 2, BLACK);
 
