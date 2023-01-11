@@ -436,6 +436,25 @@ void UI::update(State *state)
     if (brush_thickness > 50.0f) {
         brush_thickness = 50.0f;
     }
+
+    // Frame operations
+
+    // Copy
+    if (buttons["copy"].pressed()) {
+        state->copied_frame = state->frames[state->current_frame];
+        show_msg = msg_tmp;
+        msg = std::string(TextFormat("Copied frame %d", state->current_frame + 1));
+    }
+
+    // Paste
+    if (buttons["paste"].pressed()) {
+    }
+
+    // Delete
+    if (buttons["del"].pressed() && state->nframes > 1) {
+        state->frames.erase(state->frames.begin() + state->current_frame);
+        state->current_frame--;
+    }
 }
 
 void UI::end(void)

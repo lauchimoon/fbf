@@ -15,6 +15,7 @@ struct State {
     int component_selected;
     std::string project_dirname;
     ComponentManager comp_manager;
+    Frame copied_frame;
 
     int read(std::vector<std::string> info, std::vector<std::string> info_comp);
     void write(void);
