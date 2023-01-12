@@ -17,6 +17,7 @@ char stateload_filename[TEXTSIZE] = { 0 };
 char imgload_filename[TEXTSIZE] = { 0 };
 Vector2 virtual_mouse = { 0, 0 };
 float brush_thickness = 5.0f;
+std::map<int, RenderTexture> save_target;
 std::map<int, RenderTexture> export_target;
 Color erase_color = WHITE;
 float frames_counter = 0;
@@ -28,7 +29,6 @@ enum {
 };
 
 int ndigits(int n);
-int file_dialog(const char *title, char *filename, const char *filters, const char *message);
 std::string read_file_to_str(const char *filename);
 std::vector<std::string> split_str(std::string s, char find);
 std::string replace_all(std::string s, char c1, char c2);
@@ -84,6 +84,7 @@ UI ui_new(State *state)
     show_msg = 0;
     msg_time = MESSAGE_DURATION;
     msg = "";
+    save_target[0] = LoadRenderTexture(CLIP_SIZE_W, CLIP_SIZE_H);
     export_target[0] = LoadRenderTexture(CLIP_SIZE_W, CLIP_SIZE_H);
 
     state->copied_frame = frame_new(state->frames[state->current_frame].id, "(none)");
@@ -351,41 +352,44 @@ void UI::update(State *state)
     if (buttons["open"].pressed()) {
         state->frames.clear(); // avoid having frames added
         const char *dirname = tinyfd_selectFolderDialog("Select project folder", NULL);
-        std::string project_file = std::string(dirname) + "/project.fbfp";
-        std::string frames_dir = std::string(dirname) + "/frames/";
-        bool result1 = FileExists(project_file.c_str());
-        bool result2 = DirectoryExists(frames_dir.c_str());
 
-        if (result1 && result2) {
-            std::string fileread = read_file_to_str(project_file.c_str());
-            std::vector<std::string> info = split_str(fileread, '\n');
-            state->read(info, {});
-
-            for (int i = 0; i < state->anim_title.length(); i++) {
-                box_title.text[i] = state->anim_title[i];
-            }
-
-            for (int i = 0; i < ndigits(state->anim_fps); i++) {
-                box_fps.text[i] = std::to_string(state->anim_fps)[i];
-            }
-
-            // Load frames
-            for (int i = 0; i < state->nframes; i++) {
-                state->frames[i].visible_texture = LoadTexture(state->frames[i].img_path.c_str());
-                //state->frames[i].draw_texture.texture = state->frames[i].visible_texture;
-            }
-        } else {
+        if (dirname == NULL) {
             show_msg = msg_tmp;
-            msg = "There was an issue while loading";
+            msg = "Nothing was done";
+        } else {
+            std::string project_file = std::string(dirname) + "/project.fbfp";
+            std::string frames_dir = std::string(dirname) + "/frames/";
+            bool result1 = FileExists(project_file.c_str());
+            bool result2 = DirectoryExists(frames_dir.c_str());
+
+            if (result1 && result2) {
+                std::string fileread = read_file_to_str(project_file.c_str());
+                std::vector<std::string> info = split_str(fileread, '\n');
+                state->read(info, {});
+
+                for (int i = 0; i < state->anim_title.length(); i++) {
+                    box_title.text[i] = state->anim_title[i];
+                }
+
+                for (int i = 0; i < ndigits(state->anim_fps); i++) {
+                    box_fps.text[i] = std::to_string(state->anim_fps)[i];
+                }
+
+                // Load frames
+                for (int i = 0; i < state->nframes; i++) {
+                    state->frames[i].visible_texture = LoadTexture(state->frames[i].img_path.c_str());
+                    //state->frames[i].draw_texture.texture = state->frames[i].visible_texture;
+                }
+            } else {
+                show_msg = msg_tmp;
+                msg = "There was an issue while loading";
+            }
         }
     }
 
     // Save project
     if (buttons["save"].pressed()) {
         if (!std::string(box_title.text).empty() && state->anim_fps > 0) {
-            show_msg = msg_tmp;
-            msg = "Saved project";
-
             state->saved = true;
             state->anim_title = box_title.text;
             state->anim_fps = std::atoi(box_fps.text);
@@ -400,18 +404,21 @@ void UI::update(State *state)
 
             for (int i = 0; i < state->nframes; i++) {
                 // Write render texture data to image path files
-                export_target[i] = LoadRenderTexture(CLIP_SIZE_W, CLIP_SIZE_H);
-                BeginTextureMode(export_target[i]);
+                save_target[i] = LoadRenderTexture(CLIP_SIZE_W, CLIP_SIZE_H);
+                BeginTextureMode(save_target[i]);
                     Texture visible_texture = state->frames[i].visible_texture;
                     RenderTexture rt_draw = state->frames[i].draw_texture;
                     DrawTextureRec(visible_texture, Rectangle{ 0.0f, 0.0f, float(visible_texture.width), -float(visible_texture.height) }, Vector2{ 0.0f, 0.0f }, WHITE);
                     DrawTextureRec(rt_draw.texture, Rectangle{ 0.0f, 0.0f, float(rt_draw.texture.width), -float(rt_draw.texture.height) }, Vector2{ 0.0f, 0.0f }, WHITE);
                 EndTextureMode();
 
-                Image dummy = LoadImageFromTexture(export_target[i].texture);
+                Image dummy = LoadImageFromTexture(save_target[i].texture);
                 ExportImage(dummy, state->frames[i].img_path.c_str());
                 UnloadImage(dummy);
             }
+
+            show_msg = msg_tmp;
+            msg = "Saved project";
         } else {
             show_msg = msg_tmp;
             msg = "Make sure to set all fields with a value";
@@ -423,6 +430,7 @@ void UI::update(State *state)
     // Image
     if (buttons["imag"].pressed()) {
         state->component_selected = COMP_TYPE_IMG;
+        /*
         int result = file_dialog("Open image", imgload_filename, "*.png", "Supported types (*.png)");
         if (result == 0) {
             state->frames[state->current_frame].components.push_back(component_new("sample", state->current_frame, std::string(imgload_filename), Vector2{ outline_clip.x, outline_clip.y }));
@@ -430,6 +438,7 @@ void UI::update(State *state)
             show_msg = msg_tmp;
             msg = "Nothing was loaded";
         }
+        */
     }
 
     // Draw
@@ -502,7 +511,10 @@ void UI::update(State *state)
     // Preview
     if (buttons["prev"].pressed()) {
         state->current_frame = 0;
-        state->previewing = !state->previewing;
+
+        if (state->nframes > 1) {
+            state->previewing = !state->previewing;
+        }
     }
 
     if (state->previewing) {
@@ -518,9 +530,23 @@ void UI::update(State *state)
                 state->previewing = false;
             }
         }
-    } else {
-        show_msg = 0;
-        msg = "";
+    }    
+
+    // Export to GIF
+    if (buttons["egif"].pressed()) {
+        if (state->saved && state->anim_title.length() > 0) {
+            const char *filters[1] = {"*.gif"};
+            const char *title = "Save animation";
+            const char *filename = tinyfd_saveFileDialog(title, "my-cool-animation.gif", 1, filters, NULL);
+
+            if (filename == NULL) {
+                show_msg = msg_tmp;
+                msg = "Nothing was done";
+            }
+        } else {
+            show_msg = msg_tmp;
+            msg = "Make sure to save the project first";
+        }
     }
 }
 
@@ -529,6 +555,9 @@ void UI::end(void)
     box_title.end();
     box_fps.end();
 
+    for (int i = 0; i < save_target.size(); i++) {
+        UnloadRenderTexture(save_target[i]);
+    }
     for (int i = 0; i < export_target.size(); i++) {
         UnloadRenderTexture(export_target[i]);
     }
@@ -561,21 +590,6 @@ void UI::reset(void)
 int ndigits(int n)
 {
     return int(log10(n) + 1);
-}
-
-int file_dialog(const char *title, char *filename, const char *filters, const char *message)
-{
-    int result = -1;
-    int filter_count = 0;
-    const char **filter_split = TextSplit(filters, ';', &filter_count);
-    const char *tmp_filename = tinyfd_openFileDialog(title, filename, filter_count, filter_split, message, 0);
-
-    if (tmp_filename != NULL)
-        strcpy(filename, tmp_filename);
-    else
-        return 1;
-
-    return 0;
 }
 
 std::string read_file_to_str(const char *filename)
