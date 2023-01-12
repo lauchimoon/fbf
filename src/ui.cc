@@ -406,6 +406,7 @@ void UI::update(State *state)
                 // Write render texture data to image path files
                 save_target[i] = LoadRenderTexture(CLIP_SIZE_W, CLIP_SIZE_H);
                 BeginTextureMode(save_target[i]);
+                    ClearBackground(BLANK);
                     Texture visible_texture = state->frames[i].visible_texture;
                     RenderTexture rt_draw = state->frames[i].draw_texture;
                     DrawTextureRec(visible_texture, Rectangle{ 0.0f, 0.0f, float(visible_texture.width), -float(visible_texture.height) }, Vector2{ 0.0f, 0.0f }, WHITE);
