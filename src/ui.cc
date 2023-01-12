@@ -8,6 +8,8 @@
 #include "components.h"
 #include <stdlib.h>
 
+#include "msf_gif.h"
+
 #define MIN(a, b) ((a) < (b)? (a) : (b))
 
 int show_msg = 0;
@@ -21,6 +23,8 @@ std::map<int, RenderTexture> save_target;
 std::map<int, RenderTexture> export_target;
 Color erase_color = WHITE;
 float frames_counter = 0;
+
+MsfGifState gif_state = {};
 
 enum {
     msg_tmp = 1,
@@ -92,6 +96,8 @@ UI ui_new(State *state)
     state->copied_frame.visible_texture = state->frames[state->current_frame].visible_texture;
 
     frames_counter = 0;
+
+    msf_gif_begin(&gif_state, CLIP_SIZE_W, CLIP_SIZE_H);
 
     return ui;
 }
@@ -543,6 +549,36 @@ void UI::update(State *state)
             if (filename == NULL) {
                 show_msg = msg_tmp;
                 msg = "Nothing was done";
+            } else {
+                for (int i = 0; i < state->nframes; i++) {
+                    export_target[i] = LoadRenderTexture(CLIP_SIZE_W, CLIP_SIZE_H);
+                    BeginTextureMode(export_target[i]);
+                        ClearBackground(WHITE);
+                        Texture visible_texture = state->frames[i].visible_texture;
+                        RenderTexture rt_draw = state->frames[i].draw_texture;
+                        DrawTextureRec(visible_texture, Rectangle{ 0.0f, 0.0f, float(visible_texture.width), float(visible_texture.height) }, Vector2{ 0.0f, 0.0f }, WHITE);
+                        DrawTextureRec(rt_draw.texture, Rectangle{ 0.0f, 0.0f, float(rt_draw.texture.width), float(rt_draw.texture.height) }, Vector2{ 0.0f, 0.0f }, WHITE);
+                    EndTextureMode();
+
+                    Image dummy = LoadImageFromTexture(export_target[i].texture);
+                    int bit_depth = 16;
+                    msf_gif_frame(&gif_state, (unsigned char *)dummy.data, 60/state->anim_fps, bit_depth, CLIP_SIZE_W*4);
+                    UnloadImage(dummy);
+                }
+
+                MsfGifResult result = msf_gif_end(&gif_state);
+                show_msg = msg_tmp;
+
+                if (result.data) {
+                    FILE *f = fopen(filename, "wb");
+                    fwrite(result.data, result.dataSize, 1, f);
+                    fclose(f);
+                    msg = "Exported project to GIF!";
+                } else {
+                    msg = "Failed to export to GIF";
+                }
+
+                msf_gif_free(result);
             }
         } else {
             show_msg = msg_tmp;
